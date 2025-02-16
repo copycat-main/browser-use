@@ -93,8 +93,7 @@ class Agent:
 			'placeholder',
 			'value',
 			'alt',
-			'aria-expanded',
-			'test-change',
+			'aria-expanded'
 		],
 		max_error_length: int = 400,
 		max_actions_per_step: int = 10,
