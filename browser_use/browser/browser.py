@@ -6,7 +6,7 @@ import asyncio
 import gc
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+
 from playwright._impl._api_structures import ProxySettings
 from playwright.async_api import Browser as PlaywrightBrowser
 from playwright.async_api import (
@@ -71,13 +71,11 @@ class Browser:
 	def __init__(
 		self,
 		config: BrowserConfig = BrowserConfig(),
-		additonal_browser_metadata: Optional[Dict[str, str]] = None,
 	):
 		logger.debug('Initializing new browser')
 		self.config = config
 		self.playwright: Playwright | None = None
 		self.playwright_browser: PlaywrightBrowser | None = None
-		self.additonal_browser_metadata = additonal_browser_metadata
 
 		self.disable_security_args = []
 		if self.config.disable_security:
