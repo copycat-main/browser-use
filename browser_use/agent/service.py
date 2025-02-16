@@ -80,6 +80,7 @@ class Agent:
 		validate_output: bool = False,
 		message_context: Optional[str] = None,
 		generate_gif: bool | str = True,
+		copycat_metadata: Optional[Dict[str, str]] = {},
 		sensitive_data: Optional[Dict[str, str]] = None,
 		available_file_paths: Optional[list[str]] = None,
 		include_attributes: list[str] = [
@@ -125,6 +126,7 @@ class Agent:
 		self.include_attributes = include_attributes
 		self.max_error_length = max_error_length
 		self.generate_gif = generate_gif
+		self.copycat_metadata = copycat_metadata
 
 		# Initialize planner
 		self.planner_llm = planner_llm
