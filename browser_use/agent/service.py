@@ -94,6 +94,7 @@ class Agent:
 			'value',
 			'alt',
 			'aria-expanded',
+			'test-change',
 		],
 		max_error_length: int = 400,
 		max_actions_per_step: int = 10,
