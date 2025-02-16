@@ -80,7 +80,6 @@ class Agent:
 		validate_output: bool = False,
 		message_context: Optional[str] = None,
 		generate_gif: bool | str = True,
-		copycat_metadata: Optional[Dict[str, str]] = {},
 		sensitive_data: Optional[Dict[str, str]] = None,
 		available_file_paths: Optional[list[str]] = None,
 		include_attributes: list[str] = [
@@ -106,6 +105,7 @@ class Agent:
 		page_extraction_llm: Optional[BaseChatModel] = None,
 		planner_llm: Optional[BaseChatModel] = None,
 		planner_interval: int = 1,  # Run planner every N steps
+		copycat_metadata: Optional[Dict[str, str]] = {},
 	):
 		self.agent_id = str(uuid.uuid4())  # unique identifier for the agent
 		self.sensitive_data = sensitive_data
@@ -320,6 +320,7 @@ class Agent:
 				sensitive_data=self.sensitive_data,
 				check_break_if_paused=lambda: self._check_if_stopped_or_paused(),
 				available_file_paths=self.available_file_paths,
+				copycat_metadata=self.copycat_metadata
 			)
 			self._last_result = result
 
@@ -692,6 +693,7 @@ class Agent:
 				check_break_if_paused=lambda: self._check_if_stopped_or_paused(),
 				available_file_paths=self.available_file_paths,
 				sensitive_data=self.sensitive_data,
+				copycat_metadata=self.copycat_metadata,
 			)
 
 		results = []
@@ -753,6 +755,7 @@ class Agent:
 			page_extraction_llm=self.page_extraction_llm,
 			check_break_if_paused=lambda: self._check_if_stopped_or_paused(),
 			sensitive_data=self.sensitive_data,
+			copycat_metadata=self.copycat_metadata,
 		)
 
 		await asyncio.sleep(delay)

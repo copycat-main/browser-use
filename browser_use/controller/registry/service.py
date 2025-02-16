@@ -89,6 +89,7 @@ class Registry:
 		page_extraction_llm: Optional[BaseChatModel] = None,
 		sensitive_data: Optional[Dict[str, str]] = None,
 		available_file_paths: Optional[list[str]] = None,
+		copycat_metadata: Optional[Dict[str, str]] = {},
 	) -> Any:
 		"""Execute a registered action"""
 		if action_name not in self.registry.actions:
@@ -124,6 +125,8 @@ class Registry:
 				extra_args['available_file_paths'] = available_file_paths
 			if action_name == 'input_text' and sensitive_data:
 				extra_args['has_sensitive_data'] = True
+			if 'copycat_metadata' in parameter_names:
+				extra_args['copycat_metadata'] = copycat_metadata
 			if is_pydantic:
 				return await action.function(validated_params, **extra_args)
 			return await action.function(**validated_params.model_dump(), **extra_args)

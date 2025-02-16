@@ -454,6 +454,7 @@ class Controller:
 		page_extraction_llm: Optional[BaseChatModel] = None,
 		sensitive_data: Optional[Dict[str, str]] = None,
 		available_file_paths: Optional[list[str]] = None,
+		copycat_metadata: Optional[Dict[str, str]] = {},
 	) -> list[ActionResult]:
 		"""Execute multiple actions"""
 		results = []
@@ -481,7 +482,14 @@ class Controller:
 
 			check_break_if_paused()
 
-			results.append(await self.act(action, browser_context, page_extraction_llm, sensitive_data, available_file_paths))
+			results.append(await self.act(
+				action,
+				browser_context,
+				page_extraction_llm,
+				sensitive_data,
+				available_file_paths,
+				copycat_metadata,
+			))
 
 			logger.debug(f'Executed action {i + 1} / {len(actions)}')
 			if results[-1].is_done or results[-1].error or i == len(actions) - 1:
@@ -500,6 +508,7 @@ class Controller:
 		page_extraction_llm: Optional[BaseChatModel] = None,
 		sensitive_data: Optional[Dict[str, str]] = None,
 		available_file_paths: Optional[list[str]] = None,
+		copycat_metadata: Optional[Dict[str, str]] = {},
 	) -> ActionResult:
 		"""Execute an action"""
 
@@ -521,6 +530,7 @@ class Controller:
 							page_extraction_llm=page_extraction_llm,
 							sensitive_data=sensitive_data,
 							available_file_paths=available_file_paths,
+							copycat_metadata=copycat_metadata,
 						)
 
 						Laminar.set_span_output(result)
