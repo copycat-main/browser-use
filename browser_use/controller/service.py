@@ -33,12 +33,14 @@ class Controller:
 		self,
 		exclude_actions: list[str] = [],
 		output_model: Optional[Type[BaseModel]] = None,
+		controller_metadata: Optional[Dict[str, str]] = None,
 	):
 		self.exclude_actions = exclude_actions
 		self.output_model = output_model
 		self.registry = Registry(exclude_actions)
 		self._register_default_actions()
-
+		self.controller_metadata = controller_metadata
+  
 	def _register_default_actions(self):
 		"""Register all default browser actions"""
 
