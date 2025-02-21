@@ -959,13 +959,13 @@ class BrowserContext:
 			try:
 				if await is_contenteditable.json_value():
 					await element_handle.click()
-					await element_handle.type(text, delay=5)
+					await page.keyboard.type(text, delay=5)
 				else:
 					await element_handle.fill(text)
 			except Exception:
 				logger.debug('Could not type text into element. Trying to click and type.')
 				await element_handle.click()
-				await element_handle.type(text, delay=5)
+				await page.keyboard.type(text, delay=5)
 
 		except Exception as e:
 			logger.debug(f'Failed to input text into element: {repr(element_node)}. Error: {str(e)}')
