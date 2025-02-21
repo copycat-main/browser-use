@@ -47,11 +47,6 @@ from browser_use.dom.history_tree_processor.service import (
 	DOMHistoryElement,
 	HistoryTreeProcessor,
 )
-from browser_use.telemetry.views import (
-	AgentEndTelemetryEvent,
-	AgentRunTelemetryEvent,
-	AgentStepTelemetryEvent,
-)
 from browser_use.utils import time_execution_async
 from browser_use.telemetry.service import get_callback_handler
 
@@ -339,16 +334,6 @@ class Agent:
 			self._last_result = result
 
 		finally:
-			actions = [a.model_dump(exclude_unset=True) for a in model_output.action] if model_output else []
-			self.telemetry.capture(
-				AgentStepTelemetryEvent(
-					agent_id=self.agent_id,
-					step=self.n_steps,
-					actions=actions,
-					consecutive_failures=self.consecutive_failures,
-					step_error=[r.error for r in result if r.error] if result else ['No result'],
-				)
-			)
 			if not result:
 				return
 
@@ -521,17 +506,6 @@ class Agent:
 		logger.info(f'🚀 Starting task: {self.task}')
 
 		logger.debug(f'Version: {self.version}, Source: {self.source}')
-		self.telemetry.capture(
-			AgentRunTelemetryEvent(
-				agent_id=self.agent_id,
-				use_vision=self.use_vision,
-				task=self.task,
-				model_name=self.model_name,
-				chat_model_library=self.chat_model_library,
-				version=self.version,
-				source=self.source,
-			)
-		)
 
 	@observe(name='agent.run', ignore_output=True)
 	async def run(self, max_steps: int = 100) -> AgentHistoryList:
@@ -575,16 +549,6 @@ class Agent:
 
 			return self.history
 		finally:
-			self.telemetry.capture(
-				AgentEndTelemetryEvent(
-					agent_id=self.agent_id,
-					success=self.history.is_done(),
-					steps=self.n_steps,
-					max_steps_reached=self.n_steps >= max_steps,
-					errors=self.history.errors(),
-				)
-			)
-
 			if not self.injected_browser_context:
 				await self.browser_context.close()
 

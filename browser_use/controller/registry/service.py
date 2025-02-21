@@ -11,10 +11,6 @@ from browser_use.controller.registry.views import (
 	ActionRegistry,
 	RegisteredAction,
 )
-from browser_use.telemetry.views import (
-	ControllerRegisteredFunctionsTelemetryEvent,
-	RegisteredFunction,
-)
 
 
 class Registry:
@@ -166,15 +162,6 @@ class Registry:
 			)
 			for name, action in self.registry.actions.items()
 		}
-
-		self.telemetry.capture(
-			ControllerRegisteredFunctionsTelemetryEvent(
-				registered_functions=[
-					RegisteredFunction(name=name, params=action.param_model.model_json_schema())
-					for name, action in self.registry.actions.items()
-				]
-			)
-		)
 
 		return create_model('ActionModel', __base__=ActionModel, **fields)  # type:ignore
 
