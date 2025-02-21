@@ -958,7 +958,7 @@ class BrowserContext:
 			# Different handling for contenteditable vs input fields
 			try:
 				if await is_contenteditable.json_value():
-					await element_handle.evaluate('el => el.textContent = ""')
+					await element_handle.click()
 					await element_handle.type(text, delay=5)
 				else:
 					await element_handle.fill(text)
