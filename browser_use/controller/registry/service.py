@@ -11,7 +11,6 @@ from browser_use.controller.registry.views import (
 	ActionRegistry,
 	RegisteredAction,
 )
-from browser_use.telemetry.service import ProductTelemetry
 from browser_use.telemetry.views import (
 	ControllerRegisteredFunctionsTelemetryEvent,
 	RegisteredFunction,
@@ -23,7 +22,6 @@ class Registry:
 
 	def __init__(self, exclude_actions: list[str] = []):
 		self.registry = ActionRegistry()
-		self.telemetry = ProductTelemetry()
 		self.exclude_actions = exclude_actions
 
 	def _create_param_model(self, function: Callable) -> Type[BaseModel]:
