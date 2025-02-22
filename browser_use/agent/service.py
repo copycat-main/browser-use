@@ -48,7 +48,6 @@ from browser_use.dom.history_tree_processor.service import (
 	HistoryTreeProcessor,
 )
 from browser_use.utils import time_execution_async
-from browser_use.telemetry.service import get_callback_handler
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -416,7 +415,6 @@ class Agent:
 	async def get_next_action(self, input_messages: list[BaseMessage]) -> AgentOutput:
 		"""Get next action from LLM based on current state"""
 		converted_input_messages = self._convert_input_messages(input_messages, self.model_name)
-		callback_handler = get_callback_handler()
 
 		if self.model_name == 'deepseek-reasoner' or self.model_name.startswith('deepseek-r1'):
 			output = self.llm.invoke(converted_input_messages)
@@ -430,11 +428,11 @@ class Agent:
 				raise ValueError('Could not parse response.')
 		elif self.tool_calling_method is None:
 			structured_llm = self.llm.with_structured_output(self.AgentOutput, include_raw=True)
-			response: dict[str, Any] = await structured_llm.ainvoke(input_messages, config={"callbacks": [callback_handler]})  # type: ignore
+			response: dict[str, Any] = await structured_llm.ainvoke(input_messages)  # type: ignore
 			parsed: AgentOutput | None = response['parsed']
 		else:
 			structured_llm = self.llm.with_structured_output(self.AgentOutput, include_raw=True, method=self.tool_calling_method)
-			response: dict[str, Any] = await structured_llm.ainvoke(input_messages, config={"callbacks": [callback_handler]})  # type: ignore
+			response: dict[str, Any] = await structured_llm.ainvoke(input_messages)  # type: ignore
 			parsed: AgentOutput | None = response['parsed']
 
 		if parsed is None:
@@ -614,9 +612,8 @@ class Agent:
 			is_valid: bool
 			reason: str
 
-		callback_handler = get_callback_handler()
 		validator = self.llm.with_structured_output(ValidationResult, include_raw=True)
-		response: dict[str, Any] = await validator.ainvoke(msg, config={"callbacks": [callback_handler]})  # type: ignore
+		response: dict[str, Any] = await validator.ainvoke(msg)  # type: ignore
 		parsed: ValidationResult = response['parsed']
 		is_valid = parsed.is_valid
 		if not is_valid:
@@ -1257,8 +1254,7 @@ class Agent:
 
 		planner_messages = self._convert_input_messages(planner_messages, self.planner_model_name)
 		# Get planner output
-		callback_handler = get_callback_handler()
-		response = await self.planner_llm.ainvoke(planner_messages, config={"callbacks": [callback_handler]})
+		response = await self.planner_llm.ainvoke(planner_messages)
 		plan = response.content
 		# if deepseek-reasoner, remove think tags
 		if self.planner_model_name == 'deepseek-reasoner':
