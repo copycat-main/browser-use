@@ -633,8 +633,8 @@ class Agent(Generic[Context]):
 				self.settings.page_extraction_llm,
 				self.sensitive_data,
 				self.settings.available_file_paths,
-				copycat_metadata=self.copycat_metadata,
 				context=self.context,
+				copycat_metadata=self.copycat_metadata,
 			)
 
 			results.append(result)

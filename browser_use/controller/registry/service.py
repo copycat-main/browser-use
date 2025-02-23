@@ -88,8 +88,8 @@ class Registry(Generic[Context]):
 		page_extraction_llm: Optional[BaseChatModel] = None,
 		sensitive_data: Optional[Dict[str, str]] = None,
 		available_file_paths: Optional[list[str]] = None,
-		copycat_metadata: Optional[Dict[str, str]] = {},
 		context: Context | None = None,
+		copycat_metadata: Optional[Dict[str, str]] = {},
 	) -> Any:
 		"""Execute a registered action"""
 		if action_name not in self.registry.actions:
