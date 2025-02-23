@@ -401,7 +401,7 @@ class Agent(Generic[Context]):
 				metadata = StepMetadata(
 					step_number=self.state.n_steps,
 					step_start_time=step_start_time,
-					step_end_time=step_end_time,
+					step_end_time=time.time(),
 					input_tokens=tokens,
 				)
 				self._make_history_item(model_output, state, result, metadata)
