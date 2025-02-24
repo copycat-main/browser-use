@@ -412,6 +412,7 @@ class Agent(Generic[Context]):
 		include_trace = logger.isEnabledFor(logging.DEBUG)
 		error_msg = AgentError.format_error(error, include_trace=include_trace)
 		prefix = f'❌ Result failed {self.state.consecutive_failures + 1}/{self.settings.max_failures} times:\n '
+		logger.info(f'Error: {error}')
 
 		if isinstance(error, (ValidationError, ValueError)):
 			logger.info(f'{prefix}{error_msg}')
