@@ -102,6 +102,14 @@ class Controller(Generic[Context]):
 		# Element Interaction Actions
 		@self.registry.action('Click element', param_model=ClickElementAction)
 		async def click_element(params: ClickElementAction, browser: BrowserContext):
+			page = await browser.get_current_page()
+			current_url = page.url
+   
+			if 'docs.google.com/spreadsheets' in current_url:
+				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
+				logger.info(msg)
+				return ActionResult(extracted_content=msg, include_in_memory=True)
+      
 			session = await browser.get_session()
 
 			if params.index not in await browser.get_selector_map():
@@ -142,6 +150,14 @@ class Controller(Generic[Context]):
 			param_model=InputTextAction,
 		)
 		async def input_text(params: InputTextAction, browser: BrowserContext, has_sensitive_data: bool = False):
+			page = await browser.get_current_page()
+			current_url = page.url
+   
+			if 'docs.google.com/spreadsheets' in current_url:
+				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
+				logger.info(msg)
+				return ActionResult(extracted_content=msg, include_in_memory=True)
+      
 			if params.index not in await browser.get_selector_map():
 				raise Exception(f'Element index {params.index} does not exist - retry or use alternative actions')
 
@@ -179,6 +195,13 @@ class Controller(Generic[Context]):
 		)
 		async def extract_content(goal: str, browser: BrowserContext, page_extraction_llm: BaseChatModel):
 			page = await browser.get_current_page()
+			current_url = page.url
+   
+			if 'docs.google.com/spreadsheets' in current_url:
+				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
+				logger.info(msg)
+				return ActionResult(extracted_content=msg, include_in_memory=True)
+   
 			import markdownify
 
 			content = markdownify.markdownify(await page.content())
@@ -242,6 +265,12 @@ class Controller(Generic[Context]):
 		)
 		async def send_keys(params: SendKeysAction, browser: BrowserContext):
 			page = await browser.get_current_page()
+			current_url = page.url
+   
+			if 'docs.google.com/spreadsheets' in current_url:
+				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
+				logger.info(msg)
+				return ActionResult(extracted_content=msg, include_in_memory=True)
 
 			try:
 				await page.keyboard.press(params.keys)
