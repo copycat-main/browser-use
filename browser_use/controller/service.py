@@ -77,8 +77,13 @@ class Controller(Generic[Context]):
 			logger.info(msg)
 			return ActionResult(extracted_content=msg, include_in_memory=True)
 
-		@self.registry.action('Navigate to URL in the current tab. Don\'t use this action if the url is a Google Sheet', param_model=GoToUrlAction)
+		@self.registry.action('If URL doesn\'t include docs.google.com/spreadsheets, navigate to URL in the current tab.', param_model=GoToUrlAction)
 		async def go_to_url(params: GoToUrlAction, browser: BrowserContext):
+			if 'docs.google.com/spreadsheets' in params.url:
+				msg = f'🔗  Skipping Google Sheet URL Navigation: {params.url}. Use Google Sheets related actions instead.'
+				logger.info(msg)
+				return ActionResult(extracted_content=msg, include_in_memory=True)
+
 			page = await browser.get_current_page()
 			await page.goto(params.url)
 			await page.wait_for_load_state()
