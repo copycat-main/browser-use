@@ -484,6 +484,8 @@ class Agent(Generic[Context]):
 	async def get_next_action(self, input_messages: list[BaseMessage]) -> AgentOutput:
 		"""Get next action from LLM based on current state"""
 		input_messages = self._convert_input_messages(input_messages)
+  
+		logger.info(f'Input messages: {input_messages}')
 
 		if self.tool_calling_method == 'raw':
 			output = self.llm.invoke(input_messages)
