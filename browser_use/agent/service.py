@@ -412,7 +412,6 @@ class Agent(Generic[Context]):
 		include_trace = logger.isEnabledFor(logging.DEBUG)
 		error_msg = AgentError.format_error(error, include_trace=include_trace)
 		prefix = f'❌ Result failed {self.state.consecutive_failures + 1}/{self.settings.max_failures} times:\n '
-		logger.info(f'Error: {error}')
 
 		if isinstance(error, (ValidationError, ValueError)):
 			logger.info(f'{prefix}{error_msg}')
@@ -495,6 +494,7 @@ class Agent(Generic[Context]):
 				parsed = self.AgentOutput(**parsed_json)
 			except (ValueError, ValidationError) as e:
 				logger.warning(f'Failed to parse model output: {output} {str(e)}')
+				logger.info(f'Inside the first except')
 				raise ValueError('Could not parse response.')
 
 		elif self.tool_calling_method is None:
@@ -507,6 +507,7 @@ class Agent(Generic[Context]):
 			parsed: AgentOutput | None = response['parsed']
 
 		if parsed is None:
+			logger.info(f'Inside parsed is None')
 			raise ValueError('Could not parse response.')
 
 		# cut the number of actions to max_actions_per_step if needed

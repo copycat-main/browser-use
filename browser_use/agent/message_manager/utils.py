@@ -30,6 +30,7 @@ def extract_json_from_model_output(content: str) -> dict:
 		return json.loads(content)
 	except json.JSONDecodeError as e:
 		logger.warning(f'Failed to parse model output: {content} {str(e)}')
+		logger.info(f'Inside the messages except')
 		raise ValueError('Could not parse response.')
 
 
