@@ -494,7 +494,6 @@ class Agent(Generic[Context]):
 				parsed = self.AgentOutput(**parsed_json)
 			except (ValueError, ValidationError) as e:
 				logger.warning(f'Failed to parse model output: {output} {str(e)}')
-				logger.info(f'Inside the first except')
 				raise ValueError('Could not parse response.')
 
 		elif self.tool_calling_method is None:
@@ -507,7 +506,6 @@ class Agent(Generic[Context]):
 			parsed: AgentOutput | None = response['parsed']
 
 		if parsed is None:
-			logger.info(f'Inside parsed is None')
 			raise ValueError('Could not parse response.')
 
 		# cut the number of actions to max_actions_per_step if needed
