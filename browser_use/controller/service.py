@@ -77,7 +77,7 @@ class Controller(Generic[Context]):
 			logger.info(msg)
 			return ActionResult(extracted_content=msg, include_in_memory=True)
 
-		@self.registry.action('Navigate to URL in the current tab', param_model=GoToUrlAction)
+		@self.registry.action('Navigate to URL in the current tab. Don\'t use this action if the url is a Google Sheet', param_model=GoToUrlAction)
 		async def go_to_url(params: GoToUrlAction, browser: BrowserContext):
 			page = await browser.get_current_page()
 			await page.goto(params.url)
@@ -93,13 +93,6 @@ class Controller(Generic[Context]):
 			logger.info(msg)
 			return ActionResult(extracted_content=msg, include_in_memory=True)
 
-		# # wait for x seconds
-		# @self.registry.action('Wait for x seconds default 3')
-		# async def wait(seconds: int = 3):
-		# 	msg = f'🕒  Waiting for {seconds} seconds'
-		# 	logger.info(msg)
-		# 	await asyncio.sleep(seconds)
-		# 	return ActionResult(extracted_content=msg, include_in_memory=True)
 
 		# Element Interaction Actions
 		@self.registry.action('Click element', param_model=ClickElementAction)
