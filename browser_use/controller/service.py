@@ -183,12 +183,9 @@ class Controller(Generic[Context]):
 			return ActionResult(extracted_content=msg, include_in_memory=True)
 
 		@self.registry.action('Open url in new tab', param_model=OpenTabAction)
-		async def open_tab(params: OpenTabAction, browser: BrowserContext):
-			page = await browser.get_current_page()
-			current_url = page.url
-   
-			if 'docs.google.com/spreadsheets' in current_url:
-				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
+		async def open_tab(params: OpenTabAction, browser: BrowserContext):   
+			if 'docs.google.com/spreadsheets' in params.url:
+				msg = f'🔗  Skipping Google Sheet URL Navigation: {params.url}. Use Google Sheets related actions instead.'
 				logger.info(msg)
 				return ActionResult(extracted_content=msg, include_in_memory=True)
       
@@ -233,6 +230,13 @@ class Controller(Generic[Context]):
 		)
 		async def scroll_down(params: ScrollAction, browser: BrowserContext):
 			page = await browser.get_current_page()
+			current_url = page.url
+   
+			if 'docs.google.com/spreadsheets' in current_url:
+				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
+				logger.info(msg)
+				return ActionResult(extracted_content=msg, include_in_memory=True)
+   
 			if params.amount is not None:
 				await page.evaluate(f'window.scrollBy(0, {params.amount});')
 			else:
@@ -253,6 +257,13 @@ class Controller(Generic[Context]):
 		)
 		async def scroll_up(params: ScrollAction, browser: BrowserContext):
 			page = await browser.get_current_page()
+			current_url = page.url
+   
+			if 'docs.google.com/spreadsheets' in current_url:
+				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
+				logger.info(msg)
+				return ActionResult(extracted_content=msg, include_in_memory=True)
+   
 			if params.amount is not None:
 				await page.evaluate(f'window.scrollBy(0, -{params.amount});')
 			else:
