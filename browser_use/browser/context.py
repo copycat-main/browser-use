@@ -1080,15 +1080,12 @@ class BrowserContext:
 					await self._check_and_handle_navigation(page)
 
 			try:
-				return await perform_click(lambda: element_handle.click(timeout=1500))
+				return await perform_click(lambda: element_handle.click(timeout=10000))
 			except URLNotAllowedError as e:
 				raise e
-			except Exception as test_error:
+			except Exception:
 				try:
-					logger.info(f'Failed to click element & defaulting to evaluate: {test_error}')
-					up_to_date_page = await self.get_current_page()
-					return None
-					# 	return await perform_click(lambda: up_to_date_page.evaluate('(el) => el.click()', element_handle))
+					return await perform_click(lambda: page.evaluate('(el) => el.click()', element_handle))
 				except URLNotAllowedError as e:
 					raise e
 				except Exception as e:
