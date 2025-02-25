@@ -1033,7 +1033,7 @@ class BrowserContext:
 			raise BrowserError(f'Failed to input text into index {element_node.highlight_index}')
 
 	@time_execution_async('--click_element_node')
-	async def _click_element_node(self, element_node: DOMElementNode) -> Optional[str]:
+	async def _click_element_node(self, element_node: DOMElementNode | ElementHandle) -> Optional[str]:
 		"""
 		Optimized method to click an element using xpath.
 		"""
@@ -1044,7 +1044,10 @@ class BrowserContext:
 			# if element_node.highlight_index is not None:
 			# 	await self._update_state(focus_element=element_node.highlight_index)
 
-			element_handle = await self.get_locate_element(element_node)
+			if isinstance(element_node, DOMElementNode):
+				element_handle = await self.get_locate_element(element_node)
+			else:
+				element_handle = element_node
 
 			if element_handle is None:
 				raise Exception(f'Element: {repr(element_node)} not found')
