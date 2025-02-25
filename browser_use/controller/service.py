@@ -101,7 +101,10 @@ class Controller(Generic[Context]):
 
 
 		# Element Interaction Actions
-		@self.registry.action('Click element', param_model=ClickElementAction)
+		@self.registry.action(
+			'Click element by index or xpath. If xpath is provided, it will be used to click the element. If index is provided, it will be used to click the element by index. If both are provided, xpath will be used.',
+			param_model=ClickElementAction,
+		)
 		async def click_element(params: ClickElementAction, browser: BrowserContext):
 			page = await browser.get_current_page()
 			current_url = page.url
