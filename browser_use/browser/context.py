@@ -1087,7 +1087,8 @@ class BrowserContext:
 				try:
 					logger.info(f'Failed to click element & defaulting to evaluate: {test_error}')
 					up_to_date_page = await self.get_current_page()
-					return await perform_click(lambda: up_to_date_page.evaluate('(el) => el.click()', element_handle))
+					return None
+					# 	return await perform_click(lambda: up_to_date_page.evaluate('(el) => el.click()', element_handle))
 				except URLNotAllowedError as e:
 					raise e
 				except Exception as e:
