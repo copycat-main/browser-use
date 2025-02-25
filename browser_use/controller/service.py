@@ -127,17 +127,12 @@ class Controller(Generic[Context]):
 			if params.index not in await browser.get_selector_map():
 				raise Exception(f'Element with index {params.index} does not exist - retry or use alternative actions')
 
-			element_node = None
-	
-			if params.xpath:
-				element_node = await page.locator(params.xpath).element_handle()
-			else:
-				element_node = await browser.get_dom_element_by_index(params.index)
+			element_node = await browser.get_dom_element_by_index(params.index)
     
 			initial_pages = len(session.context.pages)
 
 			# if element has file uploader then dont click
-			if isinstance(element_node, DOMElementNode) and await browser.is_file_uploader(element_node):
+			if await browser.is_file_uploader(element_node):
 				msg = f'Index {params.index} - has an element which opens file upload dialog. To upload files please use a specific function to upload files '
 				logger.info(msg)
 				return ActionResult(extracted_content=msg, include_in_memory=True)
@@ -149,10 +144,7 @@ class Controller(Generic[Context]):
 				if download_path:
 					msg = f'💾  Downloaded file to {download_path}'
 				else:
-					if isinstance(element_node, DOMElementNode):
-						msg = f'🖱️  Clicked button with index {params.index}: {element_node.get_all_text_till_next_clickable_element(max_depth=2)}'
-					else:
-						msg = f'🖱️  Clicked button with index {params.index}'
+					msg = f'🖱️  Clicked button with index {params.index}: {element_node.get_all_text_till_next_clickable_element(max_depth=2)}'
 
 				logger.info(msg)
 				if len(session.context.pages) > initial_pages:
