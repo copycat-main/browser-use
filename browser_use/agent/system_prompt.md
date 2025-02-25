@@ -32,7 +32,7 @@ Common action sequences:
 - Only provide the action sequence until an action which changes the page state significantly.
 - Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
 - only use multiple actions if it makes sense.
-- If xpaths are given in the prompt, ONLY use actions that have xpaths in their description
+- If CSS is given in the prompt, ONLY use actions that have CSS in their description
 
 3. ELEMENT INTERACTION:
 - Only use indexes of the interactive elements
