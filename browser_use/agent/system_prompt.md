@@ -35,7 +35,7 @@ Common action sequences:
 - only use multiple actions if it makes sense.
 
 3. ELEMENT INTERACTION:
-- Only use indexes of the interactive elements
+- Only use indexes & xpaths of the interactive elements
 - Elements marked with "[]Non-interactive text" are non-interactive
 
 4. NAVIGATION & ERROR HANDLING:
