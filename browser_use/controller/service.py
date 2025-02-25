@@ -102,7 +102,7 @@ class Controller(Generic[Context]):
 
 		# Element Interaction Actions
 		@self.registry.action(
-			'Click element.',
+			'Click element',
 			param_model=ClickElementAction,
 		)
 		async def click_element(params: ClickElementAction, browser: BrowserContext):

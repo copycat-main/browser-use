@@ -10,6 +10,7 @@ Interactive Elements
 - index: Numeric identifier for interaction
 - type: HTML element type (button, input, etc.)
 - text: Element description
+- xpath: Full xpath of the element
 Example:
 [33]<button>Submit Form</button>
 
