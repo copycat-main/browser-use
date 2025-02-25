@@ -83,7 +83,11 @@ class Controller(Generic[Context]):
 			if 'docs.google.com/spreadsheets' in params.url:
 				msg = f'🔗  Skipping Google Sheet URL Navigation: {params.url}. Use Google Sheets related actions instead.'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					error=msg,
+				)
 
 			page = await browser.get_current_page()
 			await page.goto(params.url)
@@ -112,7 +116,11 @@ class Controller(Generic[Context]):
 			if 'docs.google.com/spreadsheets' in current_url:
 				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					error=msg,
+				)
       
 			session = await browser.get_session()
 
@@ -168,7 +176,11 @@ class Controller(Generic[Context]):
 			if 'docs.google.com/spreadsheets' in current_url:
 				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					error=msg,
+				)
       
 			if params.index not in await browser.get_selector_map():
 				raise Exception(f'Element index {params.index} does not exist - retry or use alternative actions')
@@ -199,8 +211,12 @@ class Controller(Generic[Context]):
 			if 'docs.google.com/spreadsheets' in params.url:
 				msg = f'🔗  Skipping Google Sheet URL Navigation: {params.url}. Use Google Sheets related actions instead.'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
-      
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					error=msg,
+				)
+
 			await browser.create_new_tab(params.url)
 			msg = f'🔗  Opened new tab with {params.url}'
 			logger.info(msg)
@@ -217,7 +233,11 @@ class Controller(Generic[Context]):
 			if 'docs.google.com/spreadsheets' in current_url:
 				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					error=msg,
+				)
    
 			import markdownify
 
@@ -247,7 +267,11 @@ class Controller(Generic[Context]):
 			if 'docs.google.com/spreadsheets' in current_url:
 				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					error=msg,
+				)
    
 			if params.amount is not None:
 				await page.evaluate(f'window.scrollBy(0, {params.amount});')
@@ -274,7 +298,11 @@ class Controller(Generic[Context]):
 			if 'docs.google.com/spreadsheets' in current_url:
 				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					error=msg,
+				)
    
 			if params.amount is not None:
 				await page.evaluate(f'window.scrollBy(0, -{params.amount});')
@@ -301,7 +329,11 @@ class Controller(Generic[Context]):
 			if 'docs.google.com/spreadsheets' in current_url:
 				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					error=msg,
+				)
 
 			try:
 				await page.keyboard.press(params.keys)
