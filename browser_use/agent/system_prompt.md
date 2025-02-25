@@ -10,7 +10,6 @@ Interactive Elements
 - index: Numeric identifier for interaction
 - type: HTML element type (button, input, etc.)
 - text: Element description
-- xpath: Full xpath of the element
 Example:
 [33]<button>Submit Form</button>
 
@@ -33,9 +32,10 @@ Common action sequences:
 - Only provide the action sequence until an action which changes the page state significantly.
 - Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
 - only use multiple actions if it makes sense.
+- If xpaths are given in the prompt, ONLY use actions that have xpaths in their description
 
 3. ELEMENT INTERACTION:
-- Only use indexes & xpaths of the interactive elements
+- Only use indexes of the interactive elements
 - Elements marked with "[]Non-interactive text" are non-interactive
 
 4. NAVIGATION & ERROR HANDLING:
