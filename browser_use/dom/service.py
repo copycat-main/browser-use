@@ -68,7 +68,7 @@ class DomService:
 		try:
 			eval_page = await self.page.evaluate(self.js_code, args)
 		except Exception as e:
-			logger.error('Error evaluating JavaScript: %s', e)
+			logger.info('Error evaluating JavaScript: %s', e)
 			raise
 
 		# Only log performance metrics in debug mode

@@ -436,7 +436,7 @@ class Agent(Generic[Context]):
 				await asyncio.sleep(self.settings.retry_delay)
 				self.state.consecutive_failures += 1
 			else:
-				logger.error(f'{prefix}{error_msg}')
+				logger.info(f'{prefix}{error_msg}')
 				self.state.consecutive_failures += 1
 
 		return [ActionResult(error=error_msg, include_in_memory=True)]
@@ -558,7 +558,7 @@ class Agent(Generic[Context]):
 			for step in range(max_steps):
 				# Check if we should stop due to too many failures
 				if self.state.consecutive_failures >= self.settings.max_failures:
-					logger.error(f'❌ Stopping due to {self.settings.max_failures} consecutive failures')
+					logger.info(f'❌ Stopping due to {self.settings.max_failures} consecutive failures')
 					break
 
 				# Check control flags before each step

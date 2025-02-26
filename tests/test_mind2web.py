@@ -115,19 +115,19 @@ def test_dataset_integrity(test_cases):
 
 		# Type checks
 		if not isinstance(case.get('confirmed_task'), str):
-			logger.error(f"Case {i}: 'confirmed_task' must be string")
+			logger.info(f"Case {i}: 'confirmed_task' must be string")
 			assert False, 'Task must be string'
 
 		if not isinstance(case.get('action_reprs'), list):
-			logger.error(f"Case {i}: 'action_reprs' must be list")
+			logger.info(f"Case {i}: 'action_reprs' must be list")
 			assert False, 'Actions must be list'
 
 		if len(case.get('action_reprs', [])) == 0:
-			logger.error(f"Case {i}: 'action_reprs' must not be empty")
+			logger.info(f"Case {i}: 'action_reprs' must not be empty")
 			assert False, 'Must have at least one action'
 
 	if missing_fields:
-		logger.error('Dataset integrity check failed')
+		logger.info('Dataset integrity check failed')
 		assert False, f'Missing fields: {missing_fields}'
 	else:
 		logger.info('✅ Dataset integrity check passed')

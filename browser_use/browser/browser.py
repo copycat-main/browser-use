@@ -174,7 +174,7 @@ class Browser:
 			)
 			return browser
 		except Exception as e:
-			logger.error(f'Failed to start a new Chrome instance.: {str(e)}')
+			logger.info(f'Failed to start a new Chrome instance.: {str(e)}')
 			raise RuntimeError(
 				' To start chrome in Debug mode, you need to close all existing Chrome instances and try again otherwise we can not connect to the instance.'
 			)
@@ -218,7 +218,7 @@ class Browser:
 			else:
 				return await self._setup_standard_browser(playwright)
 		except Exception as e:
-			logger.error(f'Failed to initialize Playwright browser: {str(e)}')
+			logger.info(f'Failed to initialize Playwright browser: {str(e)}')
 			raise
 
 	async def close(self):
