@@ -182,6 +182,8 @@
    * @type {Object<string, any>}
    */
   const DOM_HASH_MAP = {};
+  const EXIT_REASONS = []
+  const SKIPPED_HIGHLIGHTING = []
 
   const ID = { current: 0 };
 
@@ -790,6 +792,12 @@
     // Early bailout for non-element nodes except text
     if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.TEXT_NODE) {
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
+
+      EXIT_REASONS.push({
+        node,
+        reason: 'reason-non-element-node',
+      })
+
       return null;
     }
 
@@ -798,6 +806,12 @@
       const textContent = node.textContent.trim();
       if (!textContent) {
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
+
+        EXIT_REASONS.push({
+          node,
+          reason: 'reason-text-node-empty',
+        })
+        
         return null;
       }
 
@@ -805,6 +819,12 @@
       const parentElement = node.parentElement;
       if (!parentElement || parentElement.tagName.toLowerCase() === 'script') {
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
+
+        EXIT_REASONS.push({
+          node,
+          reason: 'reason-text-node-parent-script',
+        })
+
         return null;
       }
 
@@ -821,6 +841,12 @@
     // Quick checks for element nodes
     if (node.nodeType === Node.ELEMENT_NODE && !isElementAccepted(node)) {
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
+
+      EXIT_REASONS.push({
+        node,
+        reason: 'reason-element-node-not-accepted',
+      })
+
       return null;
     }
 
@@ -834,6 +860,12 @@
           rect.left > window.innerWidth + viewportExpansion
       )) {
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
+
+        EXIT_REASONS.push({
+          node,
+          reason: 'reason-element-node-not-in-viewport',
+        })
+
         return null;
       }
     }
@@ -857,6 +889,8 @@
     // if (isInteractiveCandidate(node)) {
 
     // Check interactivity
+    let didHighlight = false;
+
     if (node.nodeType === Node.ELEMENT_NODE) {
       nodeData.isVisible = isElementVisible(node);
       if (nodeData.isVisible) {
@@ -871,14 +905,23 @@
               if (focusHighlightIndex >= 0) {
                 if (focusHighlightIndex === nodeData.highlightIndex) {
                   highlightElement(node, nodeData.highlightIndex, parentIframe);
+                  didHighlight = true;
                 }
               } else {
                 highlightElement(node, nodeData.highlightIndex, parentIframe);
+                didHighlight = true;
               }
             }
           }
         }
       }
+    }
+
+    if (!didHighlight) {
+      SKIPPED_HIGHLIGHTING.push({
+        node,
+        reason: 'reason-element-node-not-highlighted',
+      })
     }
 
     // Process children, with special handling for iframes and rich text editors
@@ -933,6 +976,12 @@
     // Skip empty anchor tags
     if (nodeData.tagName === 'a' && nodeData.children.length === 0 && !nodeData.attributes.href) {
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
+
+      EXIT_REASONS.push({
+        node,
+        reason: 'reason-anchor-tag-empty',
+      })
+
       return null;
     }
 
@@ -1009,5 +1058,5 @@
 
   return debugMode ? 
     { rootId, map: DOM_HASH_MAP, perfMetrics: PERF_METRICS } : 
-    { rootId, map: DOM_HASH_MAP };
+    { rootId, map: DOM_HASH_MAP, skippedHighlighting: SKIPPED_HIGHLIGHTING, exitReasons: EXIT_REASONS };
 };
