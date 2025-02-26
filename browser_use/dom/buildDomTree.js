@@ -6,7 +6,12 @@
     debugMode: false,
   }
 ) => {
-  const { doHighlightElements, focusHighlightIndex, viewportExpansion, debugMode } = args;
+  const {
+    doHighlightElements,
+    focusHighlightIndex,
+    viewportExpansion,
+    debugMode,
+  } = args;
   let highlightIndex = 0; // Reset highlight index
 
   // Add timing stack to handle recursion
@@ -14,7 +19,7 @@
     nodeProcessing: [],
     treeTraversal: [],
     highlighting: [],
-    current: null
+    current: null,
   };
 
   function pushTiming(type) {
@@ -29,53 +34,55 @@
   }
 
   // Only initialize performance tracking if in debug mode
-  const PERF_METRICS = debugMode ? {
-    buildDomTreeCalls: 0,
-    timings: {
-      buildDomTree: 0,
-      highlightElement: 0,
-      isInteractiveElement: 0,
-      isElementVisible: 0,
-      isTopElement: 0,
-      isInExpandedViewport: 0,
-      isTextNodeVisible: 0,
-      getEffectiveScroll: 0,
-    },
-    cacheMetrics: {
-      boundingRectCacheHits: 0,
-      boundingRectCacheMisses: 0,
-      computedStyleCacheHits: 0,
-      computedStyleCacheMisses: 0,
-      getBoundingClientRectTime: 0,
-      getComputedStyleTime: 0,
-      boundingRectHitRate: 0,
-      computedStyleHitRate: 0,
-      overallHitRate: 0,
-    },
-    nodeMetrics: {
-      totalNodes: 0,
-      processedNodes: 0,
-      skippedNodes: 0,
-    },
-    buildDomTreeBreakdown: {
-      totalTime: 0,
-      totalSelfTime: 0,
-      buildDomTreeCalls: 0,
-      domOperations: {
-        getBoundingClientRect: 0,
-        getComputedStyle: 0,
-      },
-      domOperationCounts: {
-        getBoundingClientRect: 0,
-        getComputedStyle: 0,
+  const PERF_METRICS = debugMode
+    ? {
+        buildDomTreeCalls: 0,
+        timings: {
+          buildDomTree: 0,
+          highlightElement: 0,
+          isInteractiveElement: 0,
+          isElementVisible: 0,
+          isTopElement: 0,
+          isInExpandedViewport: 0,
+          isTextNodeVisible: 0,
+          getEffectiveScroll: 0,
+        },
+        cacheMetrics: {
+          boundingRectCacheHits: 0,
+          boundingRectCacheMisses: 0,
+          computedStyleCacheHits: 0,
+          computedStyleCacheMisses: 0,
+          getBoundingClientRectTime: 0,
+          getComputedStyleTime: 0,
+          boundingRectHitRate: 0,
+          computedStyleHitRate: 0,
+          overallHitRate: 0,
+        },
+        nodeMetrics: {
+          totalNodes: 0,
+          processedNodes: 0,
+          skippedNodes: 0,
+        },
+        buildDomTreeBreakdown: {
+          totalTime: 0,
+          totalSelfTime: 0,
+          buildDomTreeCalls: 0,
+          domOperations: {
+            getBoundingClientRect: 0,
+            getComputedStyle: 0,
+          },
+          domOperationCounts: {
+            getBoundingClientRect: 0,
+            getComputedStyle: 0,
+          },
+        },
       }
-    }
-  } : null;
+    : null;
 
   // Simple timing helper that only runs in debug mode
   function measureTime(fn) {
     if (!debugMode) return fn;
-    return function(...args) {
+    return function (...args) {
       const start = performance.now();
       const result = fn.apply(this, args);
       const duration = performance.now() - start;
@@ -86,16 +93,19 @@
   // Helper to measure DOM operations
   function measureDomOperation(operation, name) {
     if (!debugMode) return operation();
-    
+
     const start = performance.now();
     const result = operation();
     const duration = performance.now() - start;
-    
-    if (PERF_METRICS && name in PERF_METRICS.buildDomTreeBreakdown.domOperations) {
+
+    if (
+      PERF_METRICS &&
+      name in PERF_METRICS.buildDomTreeBreakdown.domOperations
+    ) {
       PERF_METRICS.buildDomTreeBreakdown.domOperations[name] += duration;
       PERF_METRICS.buildDomTreeBreakdown.domOperationCounts[name]++;
     }
-    
+
     return result;
   }
 
@@ -106,13 +116,13 @@
     clearCache: () => {
       DOM_CACHE.boundingRects = new WeakMap();
       DOM_CACHE.computedStyles = new WeakMap();
-    }
+    },
   };
 
   // Cache helper functions
   function getCachedBoundingRect(element) {
     if (!element) return null;
-    
+
     if (DOM_CACHE.boundingRects.has(element)) {
       if (debugMode && PERF_METRICS) {
         PERF_METRICS.cacheMetrics.boundingRectCacheHits++;
@@ -123,20 +133,22 @@
     if (debugMode && PERF_METRICS) {
       PERF_METRICS.cacheMetrics.boundingRectCacheMisses++;
     }
-    
+
     let rect;
     if (debugMode) {
       const start = performance.now();
       rect = element.getBoundingClientRect();
       const duration = performance.now() - start;
       if (PERF_METRICS) {
-        PERF_METRICS.buildDomTreeBreakdown.domOperations.getBoundingClientRect += duration;
-        PERF_METRICS.buildDomTreeBreakdown.domOperationCounts.getBoundingClientRect++;
+        PERF_METRICS.buildDomTreeBreakdown.domOperations.getBoundingClientRect +=
+          duration;
+        PERF_METRICS.buildDomTreeBreakdown.domOperationCounts
+          .getBoundingClientRect++;
       }
     } else {
       rect = element.getBoundingClientRect();
     }
-    
+
     if (rect) {
       DOM_CACHE.boundingRects.set(element, rect);
     }
@@ -145,7 +157,7 @@
 
   function getCachedComputedStyle(element) {
     if (!element) return null;
-    
+
     if (DOM_CACHE.computedStyles.has(element)) {
       if (debugMode && PERF_METRICS) {
         PERF_METRICS.cacheMetrics.computedStyleCacheHits++;
@@ -156,20 +168,22 @@
     if (debugMode && PERF_METRICS) {
       PERF_METRICS.cacheMetrics.computedStyleCacheMisses++;
     }
-    
+
     let style;
     if (debugMode) {
       const start = performance.now();
       style = window.getComputedStyle(element);
       const duration = performance.now() - start;
       if (PERF_METRICS) {
-        PERF_METRICS.buildDomTreeBreakdown.domOperations.getComputedStyle += duration;
-        PERF_METRICS.buildDomTreeBreakdown.domOperationCounts.getComputedStyle++;
+        PERF_METRICS.buildDomTreeBreakdown.domOperations.getComputedStyle +=
+          duration;
+        PERF_METRICS.buildDomTreeBreakdown.domOperationCounts
+          .getComputedStyle++;
       }
     } else {
       style = window.getComputedStyle(element);
     }
-    
+
     if (style) {
       DOM_CACHE.computedStyles.set(element, style);
     }
@@ -182,8 +196,8 @@
    * @type {Object<string, any>}
    */
   const DOM_HASH_MAP = {};
-  const EXIT_REASONS = []
-  const SKIPPED_HIGHLIGHTING = []
+  const EXIT_REASONS = [];
+  const SKIPPED_HIGHLIGHTING = [];
 
   const ID = { current: 0 };
 
@@ -199,24 +213,24 @@
       // Create or get highlight container
       let container = document.getElementById(HIGHLIGHT_CONTAINER_ID);
       if (!container) {
-          container = document.createElement("div");
-          container.id = HIGHLIGHT_CONTAINER_ID;
-          container.style.position = "fixed";
-          container.style.pointerEvents = "none";
-          container.style.top = "0";
-          container.style.left = "0";
-          container.style.width = "100%";
-          container.style.height = "100%";
-          container.style.zIndex = "2147483647";
-          document.body.appendChild(container);
+        container = document.createElement("div");
+        container.id = HIGHLIGHT_CONTAINER_ID;
+        container.style.position = "fixed";
+        container.style.pointerEvents = "none";
+        container.style.top = "0";
+        container.style.left = "0";
+        container.style.width = "100%";
+        container.style.height = "100%";
+        container.style.zIndex = "2147483647";
+        document.body.appendChild(container);
       }
 
       // Get element position
       const rect = measureDomOperation(
         () => element.getBoundingClientRect(),
-        'getBoundingClientRect'
+        "getBoundingClientRect"
       );
-      
+
       if (!rect) return index;
 
       // Generate a color based on the index
@@ -251,9 +265,9 @@
 
       // If element is in an iframe, calculate iframe offset
       if (parentIframe) {
-          const iframeRect = parentIframe.getBoundingClientRect();
-          iframeOffset.x = iframeRect.left;
-          iframeOffset.y = iframeRect.top;
+        const iframeRect = parentIframe.getBoundingClientRect();
+        iframeOffset.x = iframeRect.left;
+        iframeOffset.y = iframeRect.top;
       }
 
       // Calculate position
@@ -283,8 +297,8 @@
       let labelLeft = left + rect.width - labelWidth - 2;
 
       if (rect.width < labelWidth + 4 || rect.height < labelHeight + 4) {
-          labelTop = top - labelHeight - 2;
-          labelLeft = left + rect.width - labelWidth;
+        labelTop = top - labelHeight - 2;
+        labelLeft = left + rect.width - labelWidth;
       }
 
       label.style.top = `${labelTop}px`;
@@ -296,41 +310,44 @@
 
       // Update positions on scroll
       const updatePositions = () => {
-          const newRect = element.getBoundingClientRect();
-          let newIframeOffset = { x: 0, y: 0 };
-          
-          if (parentIframe) {
-              const iframeRect = parentIframe.getBoundingClientRect();
-              newIframeOffset.x = iframeRect.left;
-              newIframeOffset.y = iframeRect.top;
-          }
+        const newRect = element.getBoundingClientRect();
+        let newIframeOffset = { x: 0, y: 0 };
 
-          const newTop = newRect.top + newIframeOffset.y;
-          const newLeft = newRect.left + newIframeOffset.x;
+        if (parentIframe) {
+          const iframeRect = parentIframe.getBoundingClientRect();
+          newIframeOffset.x = iframeRect.left;
+          newIframeOffset.y = iframeRect.top;
+        }
 
-          overlay.style.top = `${newTop}px`;
-          overlay.style.left = `${newLeft}px`;
-          overlay.style.width = `${newRect.width}px`;
-          overlay.style.height = `${newRect.height}px`;
+        const newTop = newRect.top + newIframeOffset.y;
+        const newLeft = newRect.left + newIframeOffset.x;
 
-          let newLabelTop = newTop + 2;
-          let newLabelLeft = newLeft + newRect.width - labelWidth - 2;
+        overlay.style.top = `${newTop}px`;
+        overlay.style.left = `${newLeft}px`;
+        overlay.style.width = `${newRect.width}px`;
+        overlay.style.height = `${newRect.height}px`;
 
-          if (newRect.width < labelWidth + 4 || newRect.height < labelHeight + 4) {
-              newLabelTop = newTop - labelHeight - 2;
-              newLabelLeft = newLeft + newRect.width - labelWidth;
-          }
+        let newLabelTop = newTop + 2;
+        let newLabelLeft = newLeft + newRect.width - labelWidth - 2;
 
-          label.style.top = `${newLabelTop}px`;
-          label.style.left = `${newLabelLeft}px`;
+        if (
+          newRect.width < labelWidth + 4 ||
+          newRect.height < labelHeight + 4
+        ) {
+          newLabelTop = newTop - labelHeight - 2;
+          newLabelLeft = newLeft + newRect.width - labelWidth;
+        }
+
+        label.style.top = `${newLabelTop}px`;
+        label.style.left = `${newLabelLeft}px`;
       };
 
-      window.addEventListener('scroll', updatePositions);
-      window.addEventListener('resize', updatePositions);
+      window.addEventListener("scroll", updatePositions);
+      window.addEventListener("resize", updatePositions);
 
       return index + 1;
     } finally {
-      popTiming('highlighting');
+      popTiming("highlighting");
     }
   }
 
@@ -381,18 +398,18 @@
       const range = document.createRange();
       range.selectNodeContents(textNode);
       const rect = range.getBoundingClientRect();
-      
+
       // Simple size check
       if (rect.width === 0 || rect.height === 0) {
-          return false;
+        return false;
       }
 
       // Simple viewport check without scroll calculations
       const isInViewport = !(
-          rect.bottom < -viewportExpansion ||
-          rect.top > window.innerHeight + viewportExpansion ||
-          rect.right < -viewportExpansion ||
-          rect.left > window.innerWidth + viewportExpansion
+        rect.bottom < -viewportExpansion ||
+        rect.top > window.innerHeight + viewportExpansion ||
+        rect.right < -viewportExpansion ||
+        rect.left > window.innerWidth + viewportExpansion
       );
 
       // Check parent visibility
@@ -400,20 +417,25 @@
       if (!parentElement) return false;
 
       try {
-        return isInViewport && parentElement.checkVisibility({
-          checkOpacity: true,
-          checkVisibilityCSS: true,
-        });
+        return (
+          isInViewport &&
+          parentElement.checkVisibility({
+            checkOpacity: true,
+            checkVisibilityCSS: true,
+          })
+        );
       } catch (e) {
         // Fallback if checkVisibility is not supported
         const style = window.getComputedStyle(parentElement);
-        return isInViewport && 
-               style.display !== 'none' && 
-               style.visibility !== 'hidden' &&
-               style.opacity !== '0';
+        return (
+          isInViewport &&
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          style.opacity !== "0"
+        );
       }
     } catch (e) {
-      console.warn('Error checking text node visibility:', e);
+      console.warn("Error checking text node visibility:", e);
       return false;
     }
   }
@@ -421,13 +443,20 @@
   // Helper function to check if element is accepted
   function isElementAccepted(element) {
     if (!element || !element.tagName) return false;
-    
+
     // Always accept body and common container elements
     const alwaysAccept = new Set([
-      "body", "div", "main", "article", "section", "nav", "header", "footer"
+      "body",
+      "div",
+      "main",
+      "article",
+      "section",
+      "nav",
+      "header",
+      "footer",
     ]);
     const tagName = element.tagName.toLowerCase();
-    
+
     if (alwaysAccept.has(tagName)) return true;
 
     const leafElementDenyList = new Set([
@@ -439,7 +468,7 @@
       "noscript",
       "template",
     ]);
-    
+
     return !leafElementDenyList.has(tagName);
   }
 
@@ -449,10 +478,10 @@
   function isElementVisible(element) {
     const style = getCachedComputedStyle(element);
     return (
-        element.offsetWidth > 0 &&
-        element.offsetHeight > 0 &&
-        style.visibility !== "hidden" &&
-        style.display !== "none"
+      element.offsetWidth > 0 &&
+      element.offsetHeight > 0 &&
+      style.visibility !== "hidden" &&
+      style.display !== "none"
     );
   }
 
@@ -462,7 +491,7 @@
   function isInteractiveElement(element) {
     // const { scrollX, scrollY } = getEffectiveScroll(element);
     // const rect = element.getBoundingClientRect();
-    
+
     // Base interactive elements and roles
     const interactiveElements = new Set([
       "a",
@@ -476,7 +505,7 @@
       "select",
       "textarea",
       "canvas",
-      "summary"
+      "summary",
     ]);
 
     const interactiveRoles = new Set([
@@ -596,11 +625,13 @@
       element.hasAttribute("aria-selected") ||
       element.hasAttribute("aria-checked");
 
-    const isContentEditable = element.getAttribute("contenteditable") === "true" || 
+    const isContentEditable =
+      element.getAttribute("contenteditable") === "true" ||
       element.isContentEditable ||
       element.id === "tinymce" ||
       element.classList.contains("mce-content-body") ||
-      (element.tagName.toLowerCase() === "body" && element.getAttribute("data-id")?.startsWith("mce_"));
+      (element.tagName.toLowerCase() === "body" &&
+        element.getAttribute("data-id")?.startsWith("mce_"));
 
     // Check if element is draggable
     const isDraggable =
@@ -620,17 +651,16 @@
    */
   function isTopElement(element) {
     const rect = getCachedBoundingRect(element);
-    
+
     // If element is not in viewport, consider it top
-    const isInViewport = (
-        rect.left < window.innerWidth &&
-        rect.right > 0 &&
-        rect.top < window.innerHeight &&
-        rect.bottom > 0
-    );
+    const isInViewport =
+      rect.left < window.innerWidth &&
+      rect.right > 0 &&
+      rect.top < window.innerHeight &&
+      rect.bottom > 0;
 
     if (!isInViewport) {
-        return true;
+      return true;
     }
 
     // Find the correct document context and root element
@@ -638,49 +668,49 @@
 
     // If we're in an iframe, elements are considered top by default
     if (doc !== window.document) {
-        return true;
+      return true;
     }
 
     // For shadow DOM, we need to check within its own root context
     const shadowRoot = element.getRootNode();
     if (shadowRoot instanceof ShadowRoot) {
-        const centerX = rect.left + rect.width/2;
-        const centerY = rect.top + rect.height/2;
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
 
-        try {
-            const topEl = measureDomOperation(
-                () => shadowRoot.elementFromPoint(centerX, centerY),
-                'elementFromPoint'
-            );
-            if (!topEl) return false;
-
-            let current = topEl;
-            while (current && current !== shadowRoot) {
-                if (current === element) return true;
-                current = current.parentElement;
-            }
-            return false;
-        } catch (e) {
-            return true;
-        }
-    }
-
-    // For elements in viewport, check if they're topmost
-    const centerX = rect.left + rect.width/2;
-    const centerY = rect.top + rect.height/2;
-    
-    try {
-        const topEl = document.elementFromPoint(centerX, centerY);
+      try {
+        const topEl = measureDomOperation(
+          () => shadowRoot.elementFromPoint(centerX, centerY),
+          "elementFromPoint"
+        );
         if (!topEl) return false;
 
         let current = topEl;
-        while (current && current !== document.documentElement) {
-            if (current === element) return true;
-            current = current.parentElement;
+        while (current && current !== shadowRoot) {
+          if (current === element) return true;
+          current = current.parentElement;
         }
         return false;
-    } catch (e) {
+      } catch (e) {
         return true;
+      }
+    }
+
+    // For elements in viewport, check if they're topmost
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    try {
+      const topEl = document.elementFromPoint(centerX, centerY);
+      if (!topEl) return false;
+
+      let current = topEl;
+      while (current && current !== document.documentElement) {
+        if (current === element) return true;
+        current = current.parentElement;
+      }
+      return false;
+    } catch (e) {
+      return true;
     }
   }
 
@@ -689,17 +719,17 @@
    */
   function isInExpandedViewport(element, viewportExpansion) {
     if (viewportExpansion === -1) {
-        return true;
+      return true;
     }
 
     const rect = getCachedBoundingRect(element);
-    
+
     // Simple viewport check without scroll calculations
     return !(
-        rect.bottom < -viewportExpansion ||
-        rect.top > window.innerHeight + viewportExpansion ||
-        rect.right < -viewportExpansion ||
-        rect.left > window.innerWidth + viewportExpansion
+      rect.bottom < -viewportExpansion ||
+      rect.top > window.innerHeight + viewportExpansion ||
+      rect.right < -viewportExpansion ||
+      rect.left > window.innerWidth + viewportExpansion
     );
   }
 
@@ -708,21 +738,21 @@
     let currentEl = element;
     let scrollX = 0;
     let scrollY = 0;
-    
+
     return measureDomOperation(() => {
       while (currentEl && currentEl !== document.documentElement) {
-          if (currentEl.scrollLeft || currentEl.scrollTop) {
-              scrollX += currentEl.scrollLeft;
-              scrollY += currentEl.scrollTop;
-          }
-          currentEl = currentEl.parentElement;
+        if (currentEl.scrollLeft || currentEl.scrollTop) {
+          scrollX += currentEl.scrollLeft;
+          scrollY += currentEl.scrollTop;
+        }
+        currentEl = currentEl.parentElement;
       }
 
       scrollX += window.scrollX;
       scrollY += window.scrollY;
 
       return { scrollX, scrollY };
-    }, 'scrollOperations');
+    }, "scrollOperations");
   }
 
   // Add these helper functions at the top level
@@ -730,16 +760,23 @@
     if (!element || element.nodeType !== Node.ELEMENT_NODE) return false;
 
     const tagName = element.tagName.toLowerCase();
-    
+
     // Fast-path for common interactive elements
     const interactiveElements = new Set([
-      "a", "button", "input", "select", "textarea", "details", "summary"
+      "a",
+      "button",
+      "input",
+      "select",
+      "textarea",
+      "details",
+      "summary",
     ]);
-    
+
     if (interactiveElements.has(tagName)) return true;
 
     // Quick attribute checks without getting full lists
-    const hasQuickInteractiveAttr = element.hasAttribute("onclick") || 
+    const hasQuickInteractiveAttr =
+      element.hasAttribute("onclick") ||
       element.hasAttribute("role") ||
       element.hasAttribute("tabindex") ||
       element.hasAttribute("aria-") ||
@@ -750,11 +787,13 @@
 
   function quickVisibilityCheck(element) {
     // Fast initial check before expensive getComputedStyle
-    return element.offsetWidth > 0 && 
-           element.offsetHeight > 0 && 
-           !element.hasAttribute("hidden") &&
-           element.style.display !== "none" &&
-           element.style.visibility !== "hidden";
+    return (
+      element.offsetWidth > 0 &&
+      element.offsetHeight > 0 &&
+      !element.hasAttribute("hidden") &&
+      element.style.display !== "none" &&
+      element.style.visibility !== "hidden"
+    );
   }
 
   /**
@@ -771,9 +810,9 @@
     // Special handling for root node (body)
     if (node === document.body) {
       const nodeData = {
-        tagName: 'body',
+        tagName: "body",
         attributes: {},
-        xpath: '/body',
+        xpath: "/body",
         children: [],
       };
 
@@ -790,13 +829,21 @@
     }
 
     // Early bailout for non-element nodes except text
-    if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.TEXT_NODE) {
+    if (
+      node.nodeType !== Node.ELEMENT_NODE &&
+      node.nodeType !== Node.TEXT_NODE
+    ) {
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
       EXIT_REASONS.push({
-        node,
-        reason: 'reason-non-element-node',
-      })
+        nodeType: node.nodeType,
+        nodeName: node.nodeName,
+        nodeContent:
+          node.nodeType === Node.ELEMENT_NODE
+            ? node.outerHTML
+            : node.textContent,
+        reason: "reason-non-element-node",
+      });
 
       return null;
     }
@@ -808,22 +855,34 @@
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
         EXIT_REASONS.push({
-          node,
-          reason: 'reason-text-node-empty',
-        })
-        
+          nodeType: node.nodeType,
+          nodeName: node.nodeName,
+          nodeContent:
+            node.nodeType === Node.ELEMENT_NODE
+              ? node.outerHTML
+              : node.textContent,
+
+          reason: "reason-text-node-empty",
+        });
+
         return null;
       }
 
       // Only check visibility for text nodes that might be visible
       const parentElement = node.parentElement;
-      if (!parentElement || parentElement.tagName.toLowerCase() === 'script') {
+      if (!parentElement || parentElement.tagName.toLowerCase() === "script") {
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
         EXIT_REASONS.push({
-          node,
-          reason: 'reason-text-node-parent-script',
-        })
+          nodeType: node.nodeType,
+          nodeName: node.nodeName,
+          nodeContent:
+            node.nodeType === Node.ELEMENT_NODE
+              ? node.outerHTML
+              : node.textContent,
+
+          reason: "reason-text-node-parent-script",
+        });
 
         return null;
       }
@@ -843,9 +902,15 @@
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
       EXIT_REASONS.push({
-        node,
-        reason: 'reason-element-node-not-accepted',
-      })
+        nodeType: node.nodeType,
+        nodeName: node.nodeName,
+        nodeContent:
+          node.nodeType === Node.ELEMENT_NODE
+            ? node.outerHTML
+            : node.textContent,
+
+        reason: "reason-element-node-not-accepted",
+      });
 
       return null;
     }
@@ -853,18 +918,25 @@
     // Check viewport if needed
     if (viewportExpansion !== -1) {
       const rect = getCachedBoundingRect(node);
-      if (!rect || (
-          rect.bottom < -viewportExpansion ||
-          rect.top > window.innerHeight + viewportExpansion ||
-          rect.right < -viewportExpansion ||
-          rect.left > window.innerWidth + viewportExpansion
-      )) {
+      if (
+        !rect ||
+        rect.bottom < -viewportExpansion ||
+        rect.top > window.innerHeight + viewportExpansion ||
+        rect.right < -viewportExpansion ||
+        rect.left > window.innerWidth + viewportExpansion
+      ) {
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
         EXIT_REASONS.push({
-          node,
-          reason: 'reason-element-node-not-in-viewport',
-        })
+          nodeType: node.nodeType,
+          nodeName: node.nodeName,
+          nodeContent:
+            node.nodeType === Node.ELEMENT_NODE
+              ? node.outerHTML
+              : node.textContent,
+
+          reason: "reason-element-node-not-in-viewport",
+        });
 
         return null;
       }
@@ -879,7 +951,11 @@
     };
 
     // Get attributes for interactive elements or potential text containers
-    if (isInteractiveCandidate(node) || node.tagName.toLowerCase() === 'iframe' || node.tagName.toLowerCase() === 'body') {
+    if (
+      isInteractiveCandidate(node) ||
+      node.tagName.toLowerCase() === "iframe" ||
+      node.tagName.toLowerCase() === "body"
+    ) {
       const attributeNames = node.getAttributeNames?.() || [];
       for (const name of attributeNames) {
         nodeData.attributes[name] = node.getAttribute(name);
@@ -919,19 +995,25 @@
 
     if (!didHighlight) {
       SKIPPED_HIGHLIGHTING.push({
-        node,
-        reason: 'reason-element-node-not-highlighted',
-      })
+        nodeType: node.nodeType,
+        nodeName: node.nodeName,
+        nodeContent:
+          node.nodeType === Node.ELEMENT_NODE
+            ? node.outerHTML
+            : node.textContent,
+        reason: "reason-element-node-not-highlighted",
+      });
     }
 
     // Process children, with special handling for iframes and rich text editors
     if (node.tagName) {
       const tagName = node.tagName.toLowerCase();
-      
+
       // Handle iframes
       if (tagName === "iframe") {
         try {
-          const iframeDoc = node.contentDocument || node.contentWindow?.document;
+          const iframeDoc =
+            node.contentDocument || node.contentWindow?.document;
           if (iframeDoc) {
             for (const child of iframeDoc.childNodes) {
               const domElement = buildDomTree(child, node);
@@ -941,10 +1023,10 @@
         } catch (e) {
           console.warn("Unable to access iframe:", e);
         }
-      } 
+      }
       // Handle rich text editors and contenteditable elements
       else if (
-        node.isContentEditable || 
+        node.isContentEditable ||
         node.getAttribute("contenteditable") === "true" ||
         node.id === "tinymce" ||
         node.classList.contains("mce-content-body") ||
@@ -974,13 +1056,23 @@
     }
 
     // Skip empty anchor tags
-    if (nodeData.tagName === 'a' && nodeData.children.length === 0 && !nodeData.attributes.href) {
+    if (
+      nodeData.tagName === "a" &&
+      nodeData.children.length === 0 &&
+      !nodeData.attributes.href
+    ) {
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
       EXIT_REASONS.push({
-        node,
-        reason: 'reason-anchor-tag-empty',
-      })
+        nodeType: node.nodeType,
+        nodeName: node.nodeName,
+        nodeContent:
+          node.nodeType === Node.ELEMENT_NODE
+            ? node.outerHTML
+            : node.textContent,
+
+        reason: "reason-anchor-tag-empty",
+      });
 
       return null;
     }
@@ -1009,54 +1101,72 @@
   // Only process metrics in debug mode
   if (debugMode && PERF_METRICS) {
     // Convert timings to seconds and add useful derived metrics
-    Object.keys(PERF_METRICS.timings).forEach(key => {
+    Object.keys(PERF_METRICS.timings).forEach((key) => {
       PERF_METRICS.timings[key] = PERF_METRICS.timings[key] / 1000;
     });
-    
-    Object.keys(PERF_METRICS.buildDomTreeBreakdown).forEach(key => {
-      if (typeof PERF_METRICS.buildDomTreeBreakdown[key] === 'number') {
-        PERF_METRICS.buildDomTreeBreakdown[key] = PERF_METRICS.buildDomTreeBreakdown[key] / 1000;
+
+    Object.keys(PERF_METRICS.buildDomTreeBreakdown).forEach((key) => {
+      if (typeof PERF_METRICS.buildDomTreeBreakdown[key] === "number") {
+        PERF_METRICS.buildDomTreeBreakdown[key] =
+          PERF_METRICS.buildDomTreeBreakdown[key] / 1000;
       }
     });
 
     // Add some useful derived metrics
     if (PERF_METRICS.buildDomTreeBreakdown.buildDomTreeCalls > 0) {
-      PERF_METRICS.buildDomTreeBreakdown.averageTimePerNode = 
-        PERF_METRICS.buildDomTreeBreakdown.totalTime / PERF_METRICS.buildDomTreeBreakdown.buildDomTreeCalls;
+      PERF_METRICS.buildDomTreeBreakdown.averageTimePerNode =
+        PERF_METRICS.buildDomTreeBreakdown.totalTime /
+        PERF_METRICS.buildDomTreeBreakdown.buildDomTreeCalls;
     }
 
-    PERF_METRICS.buildDomTreeBreakdown.timeInChildCalls = 
-      PERF_METRICS.buildDomTreeBreakdown.totalTime - PERF_METRICS.buildDomTreeBreakdown.totalSelfTime;
+    PERF_METRICS.buildDomTreeBreakdown.timeInChildCalls =
+      PERF_METRICS.buildDomTreeBreakdown.totalTime -
+      PERF_METRICS.buildDomTreeBreakdown.totalSelfTime;
 
     // Add average time per operation to the metrics
-    Object.keys(PERF_METRICS.buildDomTreeBreakdown.domOperations).forEach(op => {
-      const time = PERF_METRICS.buildDomTreeBreakdown.domOperations[op];
-      const count = PERF_METRICS.buildDomTreeBreakdown.domOperationCounts[op];
-      if (count > 0) {
-        PERF_METRICS.buildDomTreeBreakdown.domOperations[`${op}Average`] = time / count;
+    Object.keys(PERF_METRICS.buildDomTreeBreakdown.domOperations).forEach(
+      (op) => {
+        const time = PERF_METRICS.buildDomTreeBreakdown.domOperations[op];
+        const count = PERF_METRICS.buildDomTreeBreakdown.domOperationCounts[op];
+        if (count > 0) {
+          PERF_METRICS.buildDomTreeBreakdown.domOperations[`${op}Average`] =
+            time / count;
+        }
       }
-    });
+    );
 
     // Calculate cache hit rates
-    const boundingRectTotal = PERF_METRICS.cacheMetrics.boundingRectCacheHits + PERF_METRICS.cacheMetrics.boundingRectCacheMisses;
-    const computedStyleTotal = PERF_METRICS.cacheMetrics.computedStyleCacheHits + PERF_METRICS.cacheMetrics.computedStyleCacheMisses;
-    
+    const boundingRectTotal =
+      PERF_METRICS.cacheMetrics.boundingRectCacheHits +
+      PERF_METRICS.cacheMetrics.boundingRectCacheMisses;
+    const computedStyleTotal =
+      PERF_METRICS.cacheMetrics.computedStyleCacheHits +
+      PERF_METRICS.cacheMetrics.computedStyleCacheMisses;
+
     if (boundingRectTotal > 0) {
-      PERF_METRICS.cacheMetrics.boundingRectHitRate = PERF_METRICS.cacheMetrics.boundingRectCacheHits / boundingRectTotal;
+      PERF_METRICS.cacheMetrics.boundingRectHitRate =
+        PERF_METRICS.cacheMetrics.boundingRectCacheHits / boundingRectTotal;
     }
-    
+
     if (computedStyleTotal > 0) {
-      PERF_METRICS.cacheMetrics.computedStyleHitRate = PERF_METRICS.cacheMetrics.computedStyleCacheHits / computedStyleTotal;
+      PERF_METRICS.cacheMetrics.computedStyleHitRate =
+        PERF_METRICS.cacheMetrics.computedStyleCacheHits / computedStyleTotal;
     }
-    
-    if ((boundingRectTotal + computedStyleTotal) > 0) {
-      PERF_METRICS.cacheMetrics.overallHitRate = 
-        (PERF_METRICS.cacheMetrics.boundingRectCacheHits + PERF_METRICS.cacheMetrics.computedStyleCacheHits) /
+
+    if (boundingRectTotal + computedStyleTotal > 0) {
+      PERF_METRICS.cacheMetrics.overallHitRate =
+        (PERF_METRICS.cacheMetrics.boundingRectCacheHits +
+          PERF_METRICS.cacheMetrics.computedStyleCacheHits) /
         (boundingRectTotal + computedStyleTotal);
     }
   }
 
-  return debugMode ? 
-    { rootId, map: DOM_HASH_MAP, perfMetrics: PERF_METRICS } : 
-    { rootId, map: DOM_HASH_MAP, skippedHighlighting: SKIPPED_HIGHLIGHTING, exitReasons: EXIT_REASONS };
+  return debugMode
+    ? { rootId, map: DOM_HASH_MAP, perfMetrics: PERF_METRICS }
+    : {
+        rootId,
+        map: DOM_HASH_MAP,
+        skippedHighlighting: SKIPPED_HIGHLIGHTING,
+        exitReasons: EXIT_REASONS,
+      };
 };
