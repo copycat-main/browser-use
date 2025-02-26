@@ -82,9 +82,6 @@ class DomService:
 		self,
 		eval_page: dict,
 	) -> tuple[DOMElementNode, SelectorMap]:
-		logger.info("Got the eval page")
-		logger.info(eval_page)
-     
 		js_node_map = eval_page['map']
 		js_root_id = eval_page['rootId']
 
