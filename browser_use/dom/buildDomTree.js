@@ -836,7 +836,8 @@
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
       EXIT_REASONS.push({
-        nodeRole: node.getAttribute("role"),
+        nodeTag: node.tagName,
+        nodeClass: node.classList,
         reason: "reason-non-element-node",
       });
 
@@ -850,7 +851,8 @@
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
         EXIT_REASONS.push({
-          nodeRole: node.getAttribute("role"),
+          nodeTag: node.tagName,
+        nodeClass: node.classList,
           reason: "reason-text-node-empty",
         });
 
@@ -863,7 +865,8 @@
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
         EXIT_REASONS.push({
-          nodeRole: node.getAttribute("role"),
+          nodeTag: node.tagName,
+        nodeClass: node.classList,
           reason: "reason-text-node-parent-script",
         });
 
@@ -885,7 +888,8 @@
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
       EXIT_REASONS.push({
-        nodeRole: node.getAttribute("role"),
+        nodeTag: node.tagName,
+        nodeClass: node.classList,
         reason: "reason-element-node-not-accepted",
       });
 
@@ -905,7 +909,8 @@
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
         EXIT_REASONS.push({
-          nodeRole: node.getAttribute("role"),
+          nodeTag: node.tagName,
+        nodeClass: node.classList,
           reason: "reason-element-node-not-in-viewport",
         });
 
@@ -966,7 +971,8 @@
 
     if (!didHighlight) {
       SKIPPED_HIGHLIGHTING.push({
-        nodeRole: node.getAttribute("role"),
+        nodeTag: node.tagName,
+        nodeClass: node.classList,
         reason: "reason-element-node-not-highlighted",
       });
     }
@@ -1030,7 +1036,8 @@
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
       EXIT_REASONS.push({
-        nodeRole: node.getAttribute("role"),
+        nodeTag: node.tagName,
+        nodeClass: node.classList,
         reason: "reason-anchor-tag-empty",
       });
 
