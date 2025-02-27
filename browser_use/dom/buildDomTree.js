@@ -835,11 +835,18 @@
     ) {
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
-      EXIT_REASONS.push({
-        nodeTag: node.tagName,
-        nodeClass: node.classList,
-        reason: "reason-non-element-node",
-      });
+      const attributes = {};
+      const attributeNames = node.getAttributeNames?.() || [];
+      for (const name of attributeNames) {
+        attributes[name] = node.getAttribute(name);
+      }
+      if (attributes.role === "textbox") {
+        EXIT_REASONS.push({
+          nodeTag: node.tagName,
+          nodeClass: node.classList,
+          reason: "reason-non-element-node",
+        });
+      }
 
       return null;
     }
@@ -850,11 +857,18 @@
       if (!textContent) {
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
-        EXIT_REASONS.push({
-          nodeTag: node.tagName,
-        nodeClass: node.classList,
-          reason: "reason-text-node-empty",
-        });
+        const attributes = {};
+        const attributeNames = node.getAttributeNames?.() || [];
+        for (const name of attributeNames) {
+          attributes[name] = node.getAttribute(name);
+        }
+        if (attributes.role === "textbox") {
+          EXIT_REASONS.push({
+            nodeTag: node.tagName,
+            nodeClass: node.classList,
+            reason: "reason-text-node-empty",
+          });
+        }
 
         return null;
       }
@@ -864,11 +878,18 @@
       if (!parentElement || parentElement.tagName.toLowerCase() === "script") {
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
-        EXIT_REASONS.push({
-          nodeTag: node.tagName,
-        nodeClass: node.classList,
-          reason: "reason-text-node-parent-script",
-        });
+        const attributes = {};
+        const attributeNames = node.getAttributeNames?.() || [];
+        for (const name of attributeNames) {
+          attributes[name] = node.getAttribute(name);
+        }
+        if (attributes.role === "textbox") {
+          EXIT_REASONS.push({
+            nodeTag: node.tagName,
+            nodeClass: node.classList,
+            reason: "reason-text-node-parent-script",
+          });
+        }
 
         return null;
       }
@@ -887,11 +908,18 @@
     if (node.nodeType === Node.ELEMENT_NODE && !isElementAccepted(node)) {
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
-      EXIT_REASONS.push({
-        nodeTag: node.tagName,
-        nodeClass: node.classList,
-        reason: "reason-element-node-not-accepted",
-      });
+      const attributes = {};
+      const attributeNames = node.getAttributeNames?.() || [];
+      for (const name of attributeNames) {
+        attributes[name] = node.getAttribute(name);
+      }
+      if (attributes.role === "textbox") {
+        EXIT_REASONS.push({
+          nodeTag: node.tagName,
+          nodeClass: node.classList,
+          reason: "reason-node-not-accepted",
+        });
+      }
 
       return null;
     }
@@ -908,11 +936,18 @@
       ) {
         if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
-        EXIT_REASONS.push({
-          nodeTag: node.tagName,
-        nodeClass: node.classList,
-          reason: "reason-element-node-not-in-viewport",
-        });
+        const attributes = {};
+        const attributeNames = node.getAttributeNames?.() || [];
+        for (const name of attributeNames) {
+          attributes[name] = node.getAttribute(name);
+        }
+        if (attributes.role === "textbox") {
+          EXIT_REASONS.push({
+            nodeTag: node.tagName,
+            nodeClass: node.classList,
+            reason: "reason-non-element-node-not-in-viewport",
+          });
+        }
 
         return null;
       }
@@ -970,11 +1005,18 @@
     }
 
     if (!didHighlight) {
-      SKIPPED_HIGHLIGHTING.push({
-        nodeTag: node.tagName,
-        nodeClass: node.classList,
-        reason: "reason-element-node-not-highlighted",
-      });
+      const attributes = {};
+      const attributeNames = node.getAttributeNames?.() || [];
+      for (const name of attributeNames) {
+        attributes[name] = node.getAttribute(name);
+      }
+      if (attributes.role === "textbox") {
+        SKIPPED_HIGHLIGHTING.push({
+          nodeTag: node.tagName,
+          nodeClass: node.classList,
+          reason: "reason-element-node-not-highlighted",
+        });
+      }
     }
 
     // Process children, with special handling for iframes and rich text editors
@@ -1035,11 +1077,18 @@
     ) {
       if (debugMode) PERF_METRICS.nodeMetrics.skippedNodes++;
 
-      EXIT_REASONS.push({
-        nodeTag: node.tagName,
-        nodeClass: node.classList,
-        reason: "reason-anchor-tag-empty",
-      });
+      const attributes = {};
+      const attributeNames = node.getAttributeNames?.() || [];
+      for (const name of attributeNames) {
+        attributes[name] = node.getAttribute(name);
+      }
+      if (attributes.role === "textbox") {
+        EXIT_REASONS.push({
+          nodeTag: node.tagName,
+          nodeClass: node.classList,
+          reason: "reason-non-anchor-tag-empty",
+        });
+      }
 
       return null;
     }
