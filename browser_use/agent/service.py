@@ -49,8 +49,17 @@ from browser_use.utils import time_execution_async, time_execution_sync
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+class StepResponse(BaseModel):
+    eval: str
+    memory: str
+    next_goal: str
+    actions: list[str]
 
-def log_response(response: AgentOutput) -> None:
+
+def log_response(
+    response: AgentOutput, 
+    on_log_step_response: Callable[[StepResponse], None] | None = None
+) -> None:
 	"""Utility function to log the model's response."""
 
 	if 'Success' in response.current_state.evaluation_previous_goal:
@@ -59,16 +68,32 @@ def log_response(response: AgentOutput) -> None:
 		emoji = '⚠'
 	else:
 		emoji = '🤷'
-
-	logger.info(f'{emoji} Eval: {response.current_state.evaluation_previous_goal}')
-	logger.info(f'🧠 Memory: {response.current_state.memory}')
-	logger.info(f'🎯 Next goal: {response.current_state.next_goal}')
+  
+	eval = f'{emoji} Eval: {response.current_state.evaluation_previous_goal}'
+	memory = f'🧠 Memory: {response.current_state.memory}'
+	next_goal = f'🎯 Next goal: {response.current_state.next_goal}'
+	actions = []
+ 
 	for i, action in enumerate(response.action):
-		logger.info(f'🛠️  Action {i + 1}/{len(response.action)}: {action.model_dump_json(exclude_unset=True)}')
+		action = f'🛠️  Action {i + 1}/{len(response.action)}: {action.model_dump_json(exclude_unset=True)}'
+		actions.append(action)
 
+	logger.info(eval)
+	logger.info(memory)
+	logger.info(next_goal)
+	for action in actions:
+		logger.info(action)
+  
+	if on_log_step_response:
+		step_response = StepResponse(
+			eval=eval, 
+			memory=memory, 
+			next_goal=next_goal, 
+			actions=actions
+		)
+		on_log_step_response(step_response)
 
 Context = TypeVar('Context')
-
 
 class Agent(Generic[Context]):
 	@time_execution_sync('--init (agent)')
@@ -123,6 +148,7 @@ class Agent(Generic[Context]):
 		#
 		context: Context | None = None,
   		copycat_metadata: Optional[Dict[str, str]] = {},
+		on_log_step_response: Callable[[StepResponse], None] | None = None,
 	):
 		if page_extraction_llm is None:
 			page_extraction_llm = llm
@@ -133,6 +159,7 @@ class Agent(Generic[Context]):
 		self.controller = controller
 		self.sensitive_data = sensitive_data
 		self.copycat_metadata = copycat_metadata
+		self.on_log_step_response = on_log_step_response
 
 		self.settings = AgentSettings(
 			use_vision=use_vision,
@@ -512,7 +539,10 @@ class Agent(Generic[Context]):
 		if len(parsed.action) > self.settings.max_actions_per_step:
 			parsed.action = parsed.action[: self.settings.max_actions_per_step]
 
-		log_response(parsed)
+		log_response(
+			response=parsed,
+			on_log_step_response=self.on_log_step_response
+		)
 
 		return parsed
 
