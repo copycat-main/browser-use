@@ -51,10 +51,8 @@ logger = logging.getLogger(__name__)
 
 class StepResponse(BaseModel):
     eval: str
-    memory: str
     next_goal: str
     actions: list[str]
-
 
 def log_response(
     response: AgentOutput, 
@@ -63,31 +61,35 @@ def log_response(
 	"""Utility function to log the model's response."""
 
 	if 'Success' in response.current_state.evaluation_previous_goal:
-		emoji = '👍'
+		emoji = '😻'
 	elif 'Failed' in response.current_state.evaluation_previous_goal:
-		emoji = '⚠'
+		emoji = '😿'
 	else:
-		emoji = '🤷'
+		emoji = '😿'
   
-	eval = f'{emoji} Eval: {response.current_state.evaluation_previous_goal}'
+	eval = f'{emoji} {response.current_state.evaluation_previous_goal}'
 	memory = f'🧠 Memory: {response.current_state.memory}'
-	next_goal = f'🎯 Next goal: {response.current_state.next_goal}'
+	next_goal = f'🐈 Next Goal: {response.current_state.next_goal}'
 	actions = []
  
 	for i, action in enumerate(response.action):
-		action = f'🛠️  Action {i + 1}/{len(response.action)}: {action.model_dump_json(exclude_unset=True)}'
-		actions.append(action)
+		if i == len(response.action) - 1:
+			action = f'🐱  Result: {action.model_dump_json(exclude_unset=True, indent=2)}'
+			actions.append(action)
+		else:
+			action = f'🐱  Action: {action.model_dump_json(exclude_unset=True, indent=2)}'
+			actions.append(action)
 
 	logger.info(eval)
 	logger.info(memory)
 	logger.info(next_goal)
+ 
 	for action in actions:
 		logger.info(action)
   
 	if on_log_step_response:
 		step_response = StepResponse(
 			eval=eval, 
-			memory=memory, 
 			next_goal=next_goal, 
 			actions=actions
 		)
