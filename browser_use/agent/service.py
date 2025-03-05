@@ -547,7 +547,7 @@ class Agent(Generic[Context]):
 				if should_break_from_outer_loop:
 					break
        
-				msg = 'Your current task is to complete the following step:'
+				msg = 'Your current task is to complete the following CopyCat step:'
 				msg += f'\n"{copycat_step.description}"'
 				self._message_manager._add_message_with_tokens(HumanMessage(content=msg))
     
@@ -559,7 +559,7 @@ class Agent(Generic[Context]):
 					logger.info(f'Copycat step attempt {current_copycat_step_attempt + 1} / {max_steps_per_copycat_step}')
         
 					if current_copycat_step_attempt > 0:
-						msg += f'\nCheck if the step "{copycat_step.description}" is done.'
+						msg += f'\nCheck if the step "{copycat_step.description}" is done. Do not move on to the next CopyCat step until you have checked if this one is done NOW.'
 						msg += f'\nIf it is done, use the "copycat_step_done" action with success=True.'
 						msg += f'\nIf it is not yet done, continue as usual.'
 						self._message_manager._add_message_with_tokens(HumanMessage(content=msg))
