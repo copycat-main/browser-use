@@ -552,9 +552,13 @@ class Agent(Generic[Context]):
 				msg += f'\nIf the task is fully finished, use the "copycat_step_done" action with success=True.'
 				msg += f'\nIf the task is not yet fully finished, continue as usual.'
 				self._message_manager._add_message_with_tokens(HumanMessage(content=msg))
+    
+				logger.info(f"Added the following step to the message history: {msg}")
        
-				for _ in range(max_steps_per_copycat_step):
+				for current_copycat_step_attempt in range(max_steps_per_copycat_step):
 					current_total_steps += 1
+     
+					logger.info(f'Copycat step attempt {current_copycat_step_attempt + 1} / {max_steps_per_copycat_step}')
         
 					# Check if we should stop due to too many failures
 					if self.state.consecutive_failures >= self.settings.max_failures:
@@ -582,6 +586,7 @@ class Agent(Generic[Context]):
 					await self.step(step_info)
 
 					if self.state.history.is_copycat_step_done():
+						logger.info('Copycat step done')
 						break
 				else:
 					logger.info('❌ Failed to complete task in maximum steps')
