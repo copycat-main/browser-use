@@ -540,10 +540,9 @@ class Agent(Generic[Context]):
 				self.state.last_result = result
 
 			current_total_steps = 0
-
-			for copycat_step in self.copycat_agent_steps:
-				should_break_from_outer_loop = False
+			should_break_from_outer_loop = False
     
+			for copycat_step in self.copycat_agent_steps:
 				if should_break_from_outer_loop:
 					break
        
