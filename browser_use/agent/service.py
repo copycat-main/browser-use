@@ -18,8 +18,6 @@ from langchain_core.messages import (
 
 # from lmnr.sdk.decorators import observe
 from pydantic import BaseModel, ValidationError
-
-from browser_use.agent.gif import create_history_gif
 from browser_use.agent.message_manager.service import MessageManager, MessageManagerSettings
 from browser_use.agent.message_manager.utils import convert_input_messages, extract_json_from_model_output, save_conversation
 from browser_use.agent.prompts import AgentMessagePrompt, PlannerPrompt, SystemPrompt
@@ -45,63 +43,21 @@ from browser_use.dom.history_tree_processor.service import (
 	HistoryTreeProcessor,
 )
 from browser_use.utils import time_execution_async, time_execution_sync
+from browser_use.agent.response import StepResponse, log_response
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-class StepResponse(BaseModel):
-    eval: str
-    next_goal: str
-    actions: list[str]
-
-def log_response(
-    response: AgentOutput, 
-    on_log_step_response: Callable[[StepResponse], None] | None = None
-) -> None:
-	"""Utility function to log the model's response."""
-
-	if 'Success' in response.current_state.evaluation_previous_goal:
-		emoji = '😻'
-	elif 'Failed' in response.current_state.evaluation_previous_goal:
-		emoji = '😿'
-	else:
-		emoji = '😿'
-  
-	eval = f'{emoji} {response.current_state.evaluation_previous_goal}'
-	memory = f'🧠 Memory: {response.current_state.memory}'
-	next_goal = f'🐈 Next Goal: {response.current_state.next_goal}'
-	actions = []
- 
-	for i, action in enumerate(response.action):
-		if i == len(response.action) - 1:
-			action = f'🐱  Result: {action.model_dump_json(exclude_unset=True, indent=2)}'
-			actions.append(action)
-		else:
-			action = f'🐱  Action: {action.model_dump_json(exclude_unset=True, indent=2)}'
-			actions.append(action)
-
-	logger.info(eval)
-	logger.info(memory)
-	logger.info(next_goal)
- 
-	for action in actions:
-		logger.info(action)
-  
-	if on_log_step_response:
-		step_response = StepResponse(
-			eval=eval, 
-			next_goal=next_goal, 
-			actions=actions
-		)
-		on_log_step_response(step_response)
-
 Context = TypeVar('Context')
+
+class AgentStep(BaseModel):
+    description: str
 
 class Agent(Generic[Context]):
 	@time_execution_sync('--init (agent)')
 	def __init__(
 		self,
-		task: str,
+		steps: List[AgentStep],
 		llm: BaseChatModel,
 		# Optional parameters
 		browser: Browser | None = None,
@@ -126,7 +82,6 @@ class Agent(Generic[Context]):
 		max_input_tokens: int = 128000,
 		validate_output: bool = False,
 		message_context: Optional[str] = None,
-		generate_gif: bool | str = False,
 		available_file_paths: Optional[list[str]] = None,
 		include_attributes: list[str] = [
 			'title',
@@ -156,7 +111,7 @@ class Agent(Generic[Context]):
 			page_extraction_llm = llm
 
 		# Core components
-		self.task = task
+		self.steps = steps
 		self.llm = llm
 		self.controller = controller
 		self.sensitive_data = sensitive_data
@@ -175,7 +130,6 @@ class Agent(Generic[Context]):
 			max_input_tokens=max_input_tokens,
 			validate_output=validate_output,
 			message_context=message_context,
-			generate_gif=generate_gif,
 			available_file_paths=available_file_paths,
 			include_attributes=include_attributes,
 			max_actions_per_step=max_actions_per_step,
@@ -204,7 +158,7 @@ class Agent(Generic[Context]):
 
 		# Initialize message manager with state
 		self._message_manager = MessageManager(
-			task=task,
+			steps=steps,
 			system_message=SystemPrompt(
 				action_description=self.available_actions,
 				max_actions_per_step=self.settings.max_actions_per_step,
@@ -327,9 +281,6 @@ class Agent(Generic[Context]):
 				return None
 		else:
 			return tool_calling_method
-
-	def add_new_task(self, new_task: str) -> None:
-		self._message_manager.add_new_task(new_task)
 
 	async def _raise_if_stopped_or_paused(self) -> None:
 		"""Utility function that raises an InterruptedError if the agent is stopped or paused."""
@@ -550,7 +501,7 @@ class Agent(Generic[Context]):
 
 	def _log_agent_run(self) -> None:
 		"""Log the agent run"""
-		logger.info(f'🚀 Starting task: {self.task}')
+		logger.info(f'🚀 Starting task: {self.steps}')
 
 		logger.debug(f'Version: {self.version}, Source: {self.source}')
 
@@ -624,13 +575,6 @@ class Agent(Generic[Context]):
 			if not self.injected_browser and self.browser:
 				await self.browser.close()
 
-			if self.settings.generate_gif:
-				output_path: str = 'agent_history.gif'
-				if isinstance(self.settings.generate_gif, str):
-					output_path = self.settings.generate_gif
-
-				create_history_gif(task=self.task, history=self.state.history, output_path=output_path)
-
 	# @observe(name='controller.multi_act')
 	@time_execution_async('--multi-act (agent)')
 	async def multi_act(
@@ -687,7 +631,7 @@ class Agent(Generic[Context]):
 			f'Validate if the output of last action is what the user wanted and if the task is completed. '
 			f'If the task is unclear defined, you can let it pass. But if something is missing or the image does not show what was requested dont let it pass. '
 			f'Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right. '
-			f'Task to validate: {self.task}. Return a JSON object with 2 keys: is_valid and reason. '
+			f'Task to validate: {self.steps}. Return a JSON object with 2 keys: is_valid and reason. '
 			f'is_valid is a boolean that indicates if the output is correct. '
 			f'reason is a string that explains why it is valid or not.'
 			f' example: {{"is_valid": false, "reason": "The user wanted to search for "cat photos", but the agent searched for "dog photos" instead."}}'

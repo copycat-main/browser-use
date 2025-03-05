@@ -36,7 +36,6 @@ class AgentSettings(BaseModel):
 	max_input_tokens: int = 128000
 	validate_output: bool = False
 	message_context: Optional[str] = None
-	generate_gif: bool | str = False
 	available_file_paths: Optional[list[str]] = None
 	override_system_message: Optional[str] = None
 	extend_system_message: Optional[str] = None

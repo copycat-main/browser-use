@@ -12,6 +12,7 @@ from langchain_core.messages import (
 )
 from pydantic import BaseModel
 
+from browser_use.agent.service import AgentStep
 from browser_use.agent.message_manager.views import MessageMetadata
 from browser_use.agent.prompts import AgentMessagePrompt
 from browser_use.agent.views import ActionResult, AgentOutput, AgentStepInfo, MessageManagerState
@@ -34,12 +35,12 @@ class MessageManagerSettings(BaseModel):
 class MessageManager:
 	def __init__(
 		self,
-		task: str,
+		steps: List[AgentStep],
 		system_message: SystemMessage,
 		settings: MessageManagerSettings = MessageManagerSettings(),
 		state: MessageManagerState = MessageManagerState(),
 	):
-		self.task = task
+		self.steps = steps
 		self.settings = settings
 		self.state = state
 		self.system_prompt = system_message
@@ -56,8 +57,13 @@ class MessageManager:
 			context_message = HumanMessage(content='Context for the task' + self.settings.message_context)
 			self._add_message_with_tokens(context_message)
 
+		steps_message = ""
+  
+		for i, step in enumerate(self.steps):
+			steps_message += f'Step {i+1}: {step.description}\n'
+
 		task_message = HumanMessage(
-			content=f'Your ultimate task is: """{self.task}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.'
+			content=f'Your ultimate task is to perform the following steps in order:\n"""{steps_message}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.'
 		)
 		self._add_message_with_tokens(task_message)
 
@@ -99,12 +105,6 @@ class MessageManager:
 		if self.settings.available_file_paths:
 			filepaths_msg = HumanMessage(content=f'Here are file paths you can use: {self.settings.available_file_paths}')
 			self._add_message_with_tokens(filepaths_msg)
-
-	def add_new_task(self, new_task: str) -> None:
-		content = f'Your new ultimate task is: """{new_task}""". Take the previous context into account and finish your new ultimate task. '
-		msg = HumanMessage(content=content)
-		self._add_message_with_tokens(msg)
-		self.task = new_task
 
 	@time_execution_sync('--add_state_message')
 	def add_state_message(
