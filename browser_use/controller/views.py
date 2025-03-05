@@ -28,6 +28,10 @@ class DoneAction(BaseModel):
 	success: bool
 
 
+class CopycatStepDoneAction(BaseModel):
+	success: bool
+
+
 class SwitchTabAction(BaseModel):
 	page_id: int
 

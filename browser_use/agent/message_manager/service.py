@@ -40,12 +40,12 @@ class MessageManagerSettings(BaseModel):
 class MessageManager:
 	def __init__(
 		self,
-		steps: List[CopyCatAgentStep],
+		copycat_agent_steps: List[CopyCatAgentStep],
 		system_message: SystemMessage,
 		settings: MessageManagerSettings = MessageManagerSettings(),
 		state: MessageManagerState = MessageManagerState(),
 	):
-		self.steps = steps
+		self.copycat_agent_steps = copycat_agent_steps
 		self.settings = settings
 		self.state = state
 		self.system_prompt = system_message
@@ -64,11 +64,11 @@ class MessageManager:
 
 		steps_message = ""
   
-		for i, step in enumerate(self.steps):
+		for i, step in enumerate(self.copycat_agent_steps):
 			steps_message += f'Step {i+1}: {step.description}\n'
 
 		task_message = HumanMessage(
-			content=f'Your ultimate task is to perform the following steps in order:\n"""{steps_message}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.'
+			content=f'Your ultimate task is to complete all of the following steps in order:\n"""{steps_message}""". Once you complete each step, use the copycat_step_done action in the next step to indicate that you have completed the step.'
 		)
 		self._add_message_with_tokens(task_message)
 

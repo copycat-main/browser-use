@@ -15,6 +15,7 @@ from browser_use.controller.registry.service import Registry
 from browser_use.controller.views import (
 	ClickElementAction,
 	DoneAction,
+	CopycatStepDoneAction,
 	GoToUrlAction,
 	InputTextAction,
 	NoParamsAction,
@@ -65,7 +66,14 @@ class Controller(Generic[Context]):
 			async def done(params: DoneAction):
 				return ActionResult(is_done=True, success=params.success, extracted_content=params.text)
 
-		# Basic Navigation Actions
+		@self.registry.action(
+			'Complete a copycat step - with whether or not the step is finished (success=True) or not yet completly finished (success=False).',
+			param_model=CopycatStepDoneAction,
+		)
+		async def copycat_step_done(params: CopycatStepDoneAction):
+			return ActionResult(is_copycat_step_done=True, success=params.success)		
+  
+  		# Basic Navigation Actions
 		@self.registry.action(
 			'Search the query in Google in the current tab, the query should be a search query like humans search in Google, concrete and not vague or super long. More the single most important items. ',
 			param_model=SearchGoogleAction,
