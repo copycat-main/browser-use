@@ -30,6 +30,7 @@ from browser_use.agent.views import (
 	AgentSettings,
 	AgentState,
 	AgentStepInfo,
+	CopyCatAgentStep,
 	StepMetadata,
 	ToolCallingMethod,
 )
@@ -50,14 +51,11 @@ logger = logging.getLogger(__name__)
 
 Context = TypeVar('Context')
 
-class AgentStep(BaseModel):
-    description: str
-
 class Agent(Generic[Context]):
 	@time_execution_sync('--init (agent)')
 	def __init__(
 		self,
-		steps: List[AgentStep],
+		steps: List[CopyCatAgentStep],
 		llm: BaseChatModel,
 		# Optional parameters
 		browser: Browser | None = None,

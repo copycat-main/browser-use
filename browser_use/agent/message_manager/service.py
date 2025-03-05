@@ -12,10 +12,15 @@ from langchain_core.messages import (
 )
 from pydantic import BaseModel
 
-from browser_use.agent.service import AgentStep
 from browser_use.agent.message_manager.views import MessageMetadata
 from browser_use.agent.prompts import AgentMessagePrompt
-from browser_use.agent.views import ActionResult, AgentOutput, AgentStepInfo, MessageManagerState
+from browser_use.agent.views import (
+	ActionResult,
+	AgentOutput,
+	AgentStepInfo,
+	MessageManagerState,
+ 	CopyCatAgentStep
+)
 from browser_use.browser.views import BrowserState
 from browser_use.utils import time_execution_sync
 
@@ -35,7 +40,7 @@ class MessageManagerSettings(BaseModel):
 class MessageManager:
 	def __init__(
 		self,
-		steps: List[AgentStep],
+		steps: List[CopyCatAgentStep],
 		system_message: SystemMessage,
 		settings: MessageManagerSettings = MessageManagerSettings(),
 		state: MessageManagerState = MessageManagerState(),
