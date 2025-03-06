@@ -328,16 +328,14 @@ class Agent(Generic[Context]):
 			input_messages = self._message_manager.get_messages()
 			tokens = self._message_manager.state.history.current_tokens
 
+			logger.info(f"CALLING BEFORE GET NEXT ACTION")
+			await self._check_if_copycat_step_is_done(
+				copycat_step=self.copycat_agent_steps[self.state.n_steps - 1].description,
+    			should_log_messages=True
+			)
+
 			try:
-				logger.info(f"CALLING BEFORE GET NEXT ACTION")
-				await self._check_if_copycat_step_is_done(
-        			copycat_step=self.copycat_agent_steps[self.state.n_steps - 1].description, should_log_messages=True
-           		)
 				model_output = await self.get_next_action(input_messages)
-				logger.info(f"CALLING AFTER GET NEXT ACTION")
-				await self._check_if_copycat_step_is_done(
-        			copycat_step=self.copycat_agent_steps[self.state.n_steps - 1].description, should_log_messages=True
-           		)
 
 				self.state.n_steps += 1
 
@@ -357,6 +355,12 @@ class Agent(Generic[Context]):
 				# model call failed, remove last state message from history
 				self._message_manager._remove_last_state_message()
 				raise e
+
+			logger.info(f"CALLING AFTER GET NEXT ACTION")
+			await self._check_if_copycat_step_is_done(
+				copycat_step=self.copycat_agent_steps[self.state.n_steps - 1].description,
+    			should_log_messages=True
+			)
 
 			result: list[ActionResult] = await self.multi_act(model_output.action)
 
