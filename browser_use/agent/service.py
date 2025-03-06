@@ -666,7 +666,7 @@ class Agent(Generic[Context]):
 			f'If the task has to do with extracting data, you dont have to check if the data is correct or do any calculations or validations. Just verify that data has been extracted. '
 			f'Task to validate: {copycat_step}. Return a JSON object with 2 keys: is_valid and reason. '
 			f'is_valid is a boolean that indicates if the output is correct. '
-			f'reason is a string that explains why it is valid or not.'
+			f'reason is a string that explains why it is valid or not. If the last action output had an error message, use that as the reason. If not, explain why it is valid or not.'
 			f' example: {{"is_valid": false, "reason": "The user wanted to search for "cat photos", but the agent searched for "dog photos" instead."}}'
 		)
 
