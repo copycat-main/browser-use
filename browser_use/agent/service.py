@@ -293,18 +293,20 @@ class Agent(Generic[Context]):
 
 	# @observe(name='agent.step', ignore_output=True, ignore_input=True)
 	@time_execution_async('--step (agent)')
-	async def step(self, step_info: Optional[AgentStepInfo] = None) -> None:
+	async def step(
+     self,
+     most_recent_browser_state: BrowserState,
+     step_info: Optional[AgentStepInfo] = None
+    ) -> None:
 		"""Execute one step of the task"""
 		logger.info(f'📍 Step {self.state.n_steps}')
-		state = None
+		state = most_recent_browser_state
 		model_output = None
 		result: list[ActionResult] = []
 		step_start_time = time.time()
 		tokens = 0
 
 		try:
-			state = await self.browser_context.get_state()
-
 			await self._raise_if_stopped_or_paused()
 
 			self._message_manager.add_state_message(state, self.state.last_result, step_info, self.settings.use_vision)
@@ -564,9 +566,12 @@ class Agent(Generic[Context]):
 							should_break_from_outer_loop = True
 							break
    
+					most_recent_browser_state = await self.browser_context.get_state()
+   
 					if current_copycat_step_attempt > 0:
 						is_done_with_copycat_step, validator_reason = await self._check_if_copycat_step_is_done(
-							copycat_step=copycat_step.description
+							copycat_step=copycat_step.description,
+							most_recent_browser_state=most_recent_browser_state
 						)
 			
 						if is_done_with_copycat_step:
@@ -579,7 +584,10 @@ class Agent(Generic[Context]):
 						step_number=current_total_steps,
 						max_total_steps=max_total_steps
 					)
-					await self.step(step_info)
+					await self.step(
+						most_recent_browser_state=most_recent_browser_state,
+						step_info=step_info
+					)
 				else:
 					logger.info('❌ Failed to complete task in maximum steps')
 					should_break_from_outer_loop = True
@@ -590,7 +598,12 @@ class Agent(Generic[Context]):
 				max_total_steps=max_total_steps,
 				is_last_step=True
 			)
-			await self.step(final_step_info)
+			browser_state = await self.browser_context.get_state()
+   
+			await self.step(
+				most_recent_browser_state=browser_state,
+				step_info=final_step_info
+			)
    
 			await self.log_completion()
    	
@@ -651,7 +664,7 @@ class Agent(Generic[Context]):
 
 		return results
 
-	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> tuple[bool, str]:
+	async def _check_if_copycat_step_is_done(self, copycat_step: str, most_recent_browser_state: BrowserState) -> tuple[bool, str]:
 		"""Validate the output of the last action is what the user wanted"""
 		system_msg = (
 			f'You are a validator of an agent who interacts with a browser. '
@@ -666,11 +679,8 @@ class Agent(Generic[Context]):
 		)
 
 		if self.browser_context.session:
-			state = await self.browser_context.get_state()
 			content = AgentMessagePrompt(
-				state=state,
-				result=self.state.last_result,
-				include_attributes=self.settings.include_attributes,
+				state=most_recent_browser_state,
 			)
 			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
 		else:
