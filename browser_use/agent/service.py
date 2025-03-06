@@ -674,7 +674,7 @@ class Agent(Generic[Context]):
 			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
    
 			if should_log_messages:
-				logger.info(f"the msg in the check_if_copycat_step_is_done function: {json.dumps(msg, indent=2)}")
+				logger.info(f"the msg in the check_if_copycat_step_is_done function: {msg}")
 		else:
 			# if no browser session, we can't validate the output
 			return False, 'No browser session'
