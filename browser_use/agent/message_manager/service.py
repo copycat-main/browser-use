@@ -40,12 +40,10 @@ class MessageManagerSettings(BaseModel):
 class MessageManager:
 	def __init__(
 		self,
-		copycat_agent_steps: List[CopyCatAgentStep],
 		system_message: SystemMessage,
 		settings: MessageManagerSettings = MessageManagerSettings(),
 		state: MessageManagerState = MessageManagerState(),
 	):
-		self.copycat_agent_steps = copycat_agent_steps
 		self.settings = settings
 		self.state = state
 		self.system_prompt = system_message
@@ -62,13 +60,8 @@ class MessageManager:
 			context_message = HumanMessage(content='Context for the task' + self.settings.message_context)
 			self._add_message_with_tokens(context_message)
 
-		steps_message = ""
-  
-		for i, step in enumerate(self.copycat_agent_steps):
-			steps_message += f'Step {i+1}: {step.description}\n'
-
 		task_message = HumanMessage(
-			content=f'Your ultimate task is to complete all of the following CopyCat steps in order:\n"""{steps_message}""".'
+			content=f'Your ultimate task is to complete all of the CopyCat steps that will be given to you.'
 		)
 		self._add_message_with_tokens(task_message)
 

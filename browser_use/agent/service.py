@@ -156,7 +156,6 @@ class Agent(Generic[Context]):
 
 		# Initialize message manager with state
 		self._message_manager = MessageManager(
-			copycat_agent_steps=copycat_agent_steps,
 			system_message=SystemPrompt(
 				action_description=self.available_actions,
 				max_actions_per_step=self.settings.max_actions_per_step,
@@ -295,18 +294,19 @@ class Agent(Generic[Context]):
 	@time_execution_async('--step (agent)')
 	async def step(
      self,
-     most_recent_browser_state: BrowserState,
      step_info: Optional[AgentStepInfo] = None
     ) -> None:
 		"""Execute one step of the task"""
 		logger.info(f'📍 Step {self.state.n_steps}')
-		state = most_recent_browser_state
+		state = None
 		model_output = None
 		result: list[ActionResult] = []
 		step_start_time = time.time()
 		tokens = 0
 
 		try:
+			state = await self.browser_context.get_state()
+
 			await self._raise_if_stopped_or_paused()
 
 			self._message_manager.add_state_message(state, self.state.last_result, step_info, self.settings.use_vision)
@@ -508,7 +508,8 @@ class Agent(Generic[Context]):
 	# @observe(name='agent.run', ignore_output=True)
 	@time_execution_async('--run (agent)')
 	async def run(
-		self, max_total_steps: int,
+		self,
+  		max_total_steps: int,
 		max_steps_per_copycat_step: int
     ) -> AgentHistoryList:
 		"""Execute the task with maximum number of steps"""
@@ -523,20 +524,13 @@ class Agent(Generic[Context]):
 			current_total_steps = 0
 			should_break_from_outer_loop = False
     
-			for i, copycat_step in enumerate(self.copycat_agent_steps):
+			for copycat_step in self.copycat_agent_steps:
 				if should_break_from_outer_loop:
 					break
-
-				msg = ''
-	
-				if i > 0:
-					msg = f'\nThe previous CopyCat step has been completed. Now you can start with the next one:'
      
-				msg += f'\nYour current task is to complete the following CopyCat step:'
+				msg = f'\nYour current task is to complete the following CopyCat step:'
 				msg += f'\n"{copycat_step.description}"'
-				msg += f'\nIf you realize that you are done with the step, use the "do_nothing" action.'
 				msg += f'\nYou are NOT ALLOWED to move on to the next CopyCat step until you have completed the current one.'
-				msg += f'\nIf you are not sure if you are done with the step, use the "do_nothing" action.'
 				msg += f'\nThe most important thing is to NOT move on to the next CopyCat step until you have completed the current one.'
 				self._message_manager._add_message_with_tokens(HumanMessage(content=msg))
     
@@ -585,7 +579,6 @@ class Agent(Generic[Context]):
 						max_total_steps=max_total_steps
 					)
 					await self.step(
-						most_recent_browser_state=most_recent_browser_state,
 						step_info=step_info
 					)
 				else:
@@ -598,10 +591,8 @@ class Agent(Generic[Context]):
 				max_total_steps=max_total_steps,
 				is_last_step=True
 			)
-			browser_state = await self.browser_context.get_state()
    
 			await self.step(
-				most_recent_browser_state=browser_state,
 				step_info=final_step_info
 			)
    
