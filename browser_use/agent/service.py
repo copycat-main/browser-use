@@ -329,7 +329,7 @@ class Agent(Generic[Context]):
 			tokens = self._message_manager.state.history.current_tokens
 
 			try:
-				logger.info(f"the input_messages in the step function: {input_messages}")
+				logger.info(f"the input_messages in the step function: {json.dumps(input_messages, indent=2)}")
        
 				model_output = await self.get_next_action(input_messages)
 
