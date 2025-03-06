@@ -541,7 +541,7 @@ class Agent(Generic[Context]):
 					)
 		
 					if is_done_with_copycat_step:
-						logger.info(f'✅ Copycat step is done.')
+						logger.info(f'✅ Copycat step is done. {validator_reason}')
 						break
 					else:
 						logger.info(f'❌ Copycat step is not done. Reason: {validator_reason}')
