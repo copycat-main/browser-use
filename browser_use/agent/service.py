@@ -503,27 +503,6 @@ class Agent(Generic[Context]):
 
 		logger.debug(f'Version: {self.version}, Source: {self.source}')
 
-	async def take_step(self) -> tuple[bool, bool]:
-		"""Take a step
-
-		Returns:
-			Tuple[bool, bool]: (is_done, is_valid)
-		"""
-		await self.step()
-
-		if self.state.history.is_done():
-			if self.settings.validate_output:
-				if not await self._validate_output():
-					return True, False
-
-			await self.log_completion()
-			if self.register_done_callback:
-				await self.register_done_callback(self.state.history)
-
-			return True, True
-
-		return False, False
-
 	# @observe(name='agent.run', ignore_output=True)
 	@time_execution_async('--run (agent)')
 	async def run(
@@ -558,11 +537,11 @@ class Agent(Generic[Context]):
 					logger.info(f'Copycat step attempt {current_copycat_step_attempt + 1} / {max_steps_per_copycat_step}')
         
 					if current_copycat_step_attempt > 0:
-						is_done = await self._check_if_copycat_step_is_done(
+						is_done_with_copycat_step = await self._check_if_copycat_step_is_done(
 							copycat_step=copycat_step.description
 						)
          
-						if is_done:
+						if is_done_with_copycat_step:
 							break
         
 					# Check if we should stop due to too many failures
@@ -660,14 +639,14 @@ class Agent(Generic[Context]):
 
 		return results
 
-	async def _validate_output(self) -> bool:
+	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> bool:
 		"""Validate the output of the last action is what the user wanted"""
 		system_msg = (
 			f'You are a validator of an agent who interacts with a browser. '
 			f'Validate if the output of last action is what the user wanted and if the task is completed. '
 			f'If the task is unclear defined, you can let it pass. But if something is missing or the image does not show what was requested dont let it pass. '
 			f'Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right. '
-			f'Task to validate: {self.copycat_agent_steps}. Return a JSON object with 2 keys: is_valid and reason. '
+			f'Task to validate: {copycat_step}. Return a JSON object with 2 keys: is_valid and reason. '
 			f'is_valid is a boolean that indicates if the output is correct. '
 			f'reason is a string that explains why it is valid or not.'
 			f' example: {{"is_valid": false, "reason": "The user wanted to search for "cat photos", but the agent searched for "dog photos" instead."}}'
@@ -685,6 +664,9 @@ class Agent(Generic[Context]):
 			# if no browser session, we can't validate the output
 			return True
 
+		logger.info(f'[DEBUG] Validating copycat step with following system message: {system_msg}')
+		logger.info(f'[DEBUG] Input messages: {msg}')
+
 		class ValidationResult(BaseModel):
 			"""
 			Validation results.
@@ -696,6 +678,10 @@ class Agent(Generic[Context]):
 		validator = self.llm.with_structured_output(ValidationResult, include_raw=True)
 		response: dict[str, Any] = await validator.ainvoke(msg)  # type: ignore
 		parsed: ValidationResult = response['parsed']
+  
+		logger.info(f'[DEBUG] Validator response: {response}')
+		logger.info(f'[DEBUG] Parsed response: {parsed}')
+
 		is_valid = parsed.is_valid
 		if not is_valid:
 			logger.info(f'❌ Validator decision: {parsed.reason}')
@@ -704,46 +690,6 @@ class Agent(Generic[Context]):
 		else:
 			logger.info(f'✅ Validator decision: {parsed.reason}')
 		return is_valid
-
-	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> bool:
-		"""Check if the copycat step is done"""
-		system_msg = (
-			f'You are a validator of an agent who interacts with a browser. '
-			f'Validate if the copycat step is done given the previous actions that were executed and the current state of the browser. '
-			f'CopyCat step to validate: "{copycat_step}". Return a JSON object with 1 key: is_copycat_step_done. '
-			f'is_copycat_step_done is a boolean that indicates if the copycat step is done. '
-			f' example: {{"is_copycat_step_done": true}}'
-		)
-  
-		logger.info(f'[DEBUG] Checking if copycat step is done w/ following system message: {system_msg}')
-
-		if self.browser_context.session:
-			input_messages = self._message_manager.get_messages()
-			input_messages = self._convert_input_messages(input_messages)
-			msg = [SystemMessage(content=system_msg)] + input_messages
-			logger.info(f'[DEBUG] Input messages: {input_messages}')
-		else:
-			return True
-
-		class ValidationResult(BaseModel):
-			"""
-			Validation results.
-			"""
-			is_copycat_step_done: bool
-
-		validator = self.llm.with_structured_output(ValidationResult, include_raw=True)
-		response: dict[str, Any] = await validator.ainvoke(msg)  # type: ignore
-		parsed: ValidationResult = response['parsed']
-  
-		logger.info(f'[DEBUG] Response from LLM: {response}')
-		is_copycat_step_done = parsed.is_copycat_step_done
-		if not is_copycat_step_done:
-			logger.info(f'❌ Copycat step is not done.')
-			msg = f'The copycat step is not done.'
-			self.state.last_result = [ActionResult(extracted_content=msg, include_in_memory=True)]
-		else:
-			logger.info(f'✅ Copycat step is done.')
-		return is_copycat_step_done
 
 
 	async def log_completion(self) -> None:
