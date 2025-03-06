@@ -68,7 +68,7 @@ class MessageManager:
 			steps_message += f'Step {i+1}: {step.description}\n'
 
 		task_message = HumanMessage(
-			content=f'Your ultimate task is to complete all of the following steps in order:\n"""{steps_message}""".'
+			content=f'Your ultimate task is to complete all of the following CopyCat steps in order:\n"""{steps_message}""".'
 		)
 		self._add_message_with_tokens(task_message)
 
