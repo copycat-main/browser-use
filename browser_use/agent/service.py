@@ -714,11 +714,14 @@ class Agent(Generic[Context]):
 			f'is_copycat_step_done is a boolean that indicates if the copycat step is done. '
 			f' example: {{"is_copycat_step_done": true}}'
 		)
+  
+		logger.info(f'[DEBUG] Checking if copycat step is done w/ following system message: {system_msg}')
 
 		if self.browser_context.session:
 			input_messages = self._message_manager.get_messages()
 			input_messages = self._convert_input_messages(input_messages)
 			msg = [SystemMessage(content=system_msg)] + input_messages
+			logger.info(f'[DEBUG] Input messages: {input_messages}')
 		else:
 			return True
 
@@ -731,6 +734,8 @@ class Agent(Generic[Context]):
 		validator = self.llm.with_structured_output(ValidationResult, include_raw=True)
 		response: dict[str, Any] = await validator.ainvoke(msg)  # type: ignore
 		parsed: ValidationResult = response['parsed']
+  
+		logger.info(f'[DEBUG] Response from LLM: {response}')
 		is_copycat_step_done = parsed.is_copycat_step_done
 		if not is_copycat_step_done:
 			logger.info(f'❌ Copycat step is not done.')
