@@ -108,7 +108,7 @@ class Controller(Generic[Context]):
 		async def do_nothing(_: NoParamsAction, browser: BrowserContext):
 			msg = 'Do nothing'
 			logger.info(msg)
-			return ActionResult(extracted_content=msg, include_in_memory=True)
+			return ActionResult(extracted_content=msg, include_in_memory=False)
 
 		# Element Interaction Actions
 		@self.registry.action(
