@@ -660,6 +660,7 @@ class Agent(Generic[Context]):
 		system_msg = (
 			f'You are a validator of an agent who interacts with a browser. '
 			f'Validate if the output of last action is what the user wanted and if the task is completed. '
+			f'If the output of the last action has succcess=False, then the task is not done. '
 			f'If the task is unclear defined, you can let it pass. But if something is missing or the image does not show what was requested dont let it pass. '
 			f'Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right. '
 			f'If the task has to do with extracting data, you dont have to check if the data is correct or do any calculations or validations. Just verify that data has been extracted. '
@@ -672,6 +673,8 @@ class Agent(Generic[Context]):
 		if self.browser_context.session:
 			content = AgentMessagePrompt(
 				state=most_recent_browser_state,
+				result=self.state.last_result,
+				include_attributes=self.settings.include_attributes
 			)
 			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
 		else:

@@ -87,6 +87,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
 
 			page = await browser.get_current_page()
@@ -119,6 +120,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
       
 			session = await browser.get_session()
@@ -171,6 +173,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
       
 			if params.index not in await browser.get_selector_map():
@@ -206,6 +209,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
 
 			await browser.create_new_tab(params.url)
@@ -228,6 +232,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
    
 			import markdownify
@@ -262,6 +267,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
    
 			if params.amount is not None:
@@ -293,6 +299,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
    
 			if params.amount is not None:
@@ -324,6 +331,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
 
 			try:
