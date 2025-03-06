@@ -358,8 +358,7 @@ class Agent(Generic[Context]):
 
 			if copycat_step:
 				is_done_with_copycat_step, validator_reason = await self._check_if_copycat_step_is_done(
-					copycat_step=copycat_step.description,
-					should_log_messages=True
+					copycat_step=copycat_step.description
 				)
 
 			if is_done_with_copycat_step:
@@ -661,7 +660,7 @@ class Agent(Generic[Context]):
 
 		return results
 
-	async def _check_if_copycat_step_is_done(self, copycat_step: str, should_log_messages: bool = False) -> tuple[bool, str]:
+	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> tuple[bool, str]:
 		"""Validate the output of the last action is what the user wanted"""
 		system_msg = (
 			f'You are a validator of an agent who interacts with a browser. '
@@ -683,9 +682,6 @@ class Agent(Generic[Context]):
 				include_attributes=self.settings.include_attributes,
 			)
 			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
-   
-			if should_log_messages:
-				logger.info(f"the msg in the check_if_copycat_step_is_done function: {msg}")
 		else:
 			# if no browser session, we can't validate the output
 			return False, 'No browser session'
