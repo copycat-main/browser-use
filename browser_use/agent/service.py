@@ -329,6 +329,8 @@ class Agent(Generic[Context]):
 			tokens = self._message_manager.state.history.current_tokens
 
 			try:
+				logger.info(f"the input_messages in the step function: {input_messages}")
+       
 				model_output = await self.get_next_action(input_messages)
 
 				self.state.n_steps += 1
