@@ -665,7 +665,7 @@ class Agent(Generic[Context]):
 			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
 		else:
 			# if no browser session, we can't validate the output
-			return True, 'No browser session'
+			return False, 'No browser session'
 
 		class ValidationResult(BaseModel):
 			"""
