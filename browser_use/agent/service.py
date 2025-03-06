@@ -563,7 +563,6 @@ class Agent(Generic[Context]):
 						)
          
 						if is_done:
-							logger.info(f'✅ Copycat step is done.')
 							break
         
 					# Check if we should stop due to too many failures
@@ -710,22 +709,16 @@ class Agent(Generic[Context]):
 		"""Check if the copycat step is done"""
 		system_msg = (
 			f'You are a validator of an agent who interacts with a browser. '
-			f'Validate if the copycat step is done. '
-			f'If the copycat_step is unclear defined, you can let it pass. But if something is missing or the image does not show what was requested dont let it pass. '
-			f'Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right. '
-			f'Task to validate: {copycat_step}. Return a JSON object with 1 key: is_done. '
-			f'is_done is a boolean that indicates if the copycat step is done. '
-			f' example: {{"is_done": true}}'
+			f'Validate if the copycat step is done given the previous actions that were executed and the current state of the browser. '
+			f'CopyCat step to validate: "{copycat_step}". Return a JSON object with 1 key: is_copycat_step_done. '
+			f'is_copycat_step_done is a boolean that indicates if the copycat step is done. '
+			f' example: {{"is_copycat_step_done": true}}'
 		)
 
 		if self.browser_context.session:
-			state = await self.browser_context.get_state()
-			content = AgentMessagePrompt(
-				state=state,
-				result=self.state.last_result,
-				include_attributes=self.settings.include_attributes,
-			)
-			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
+			input_messages = self._message_manager.get_messages()
+			input_messages = self._convert_input_messages(input_messages)
+			msg = [SystemMessage(content=system_msg)] + input_messages
 		else:
 			return True
 
@@ -733,19 +726,19 @@ class Agent(Generic[Context]):
 			"""
 			Validation results.
 			"""
-			is_done: bool
+			is_copycat_step_done: bool
 
 		validator = self.llm.with_structured_output(ValidationResult, include_raw=True)
 		response: dict[str, Any] = await validator.ainvoke(msg)  # type: ignore
 		parsed: ValidationResult = response['parsed']
-		is_done = parsed.is_done
-		if not is_done:
+		is_copycat_step_done = parsed.is_copycat_step_done
+		if not is_copycat_step_done:
 			logger.info(f'❌ Copycat step is not done.')
 			msg = f'The copycat step is not done.'
 			self.state.last_result = [ActionResult(extracted_content=msg, include_in_memory=True)]
 		else:
 			logger.info(f'✅ Copycat step is done.')
-		return is_done
+		return is_copycat_step_done
 
 
 	async def log_completion(self) -> None:
