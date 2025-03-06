@@ -61,7 +61,7 @@ class MessageManager:
 			self._add_message_with_tokens(context_message)
 
 		task_message = HumanMessage(
-			content=f'Your ultimate task is to complete all of the CopyCat steps that will be given to you.'
+			content=f'Your ultimate task is to complete all of the CopyCat steps that will be given to you. NEVER use the "done" action unless explicitly told to do so.'
 		)
 		self._add_message_with_tokens(task_message)
 

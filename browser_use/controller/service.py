@@ -15,7 +15,6 @@ from browser_use.controller.registry.service import Registry
 from browser_use.controller.views import (
 	ClickElementAction,
 	DoneAction,
-	CopycatStepDoneAction,
 	GoToUrlAction,
 	InputTextAction,
 	NoParamsAction,
