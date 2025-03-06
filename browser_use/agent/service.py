@@ -537,12 +537,15 @@ class Agent(Generic[Context]):
 					logger.info(f'Copycat step attempt {current_copycat_step_attempt + 1} / {max_steps_per_copycat_step}')
         
 					if current_copycat_step_attempt > 0:
-						is_done_with_copycat_step = await self._check_if_copycat_step_is_done(
+						is_done_with_copycat_step, validator_reason = await self._check_if_copycat_step_is_done(
 							copycat_step=copycat_step.description
 						)
          
 						if is_done_with_copycat_step:
+							logger.info(f'✅ Copycat step is done.')
 							break
+						else:
+							logger.info(f'❌ Copycat step is not done. Reason: {validator_reason}')
         
 					# Check if we should stop due to too many failures
 					if self.state.consecutive_failures >= self.settings.max_failures:
@@ -639,7 +642,7 @@ class Agent(Generic[Context]):
 
 		return results
 
-	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> bool:
+	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> tuple[bool, str]:
 		"""Validate the output of the last action is what the user wanted"""
 		system_msg = (
 			f'You are a validator of an agent who interacts with a browser. '
@@ -662,10 +665,7 @@ class Agent(Generic[Context]):
 			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
 		else:
 			# if no browser session, we can't validate the output
-			return True
-
-		logger.info(f'[DEBUG] Validating copycat step with following system message: {system_msg}')
-		logger.info(f'[DEBUG] Input messages: {msg}')
+			return True, 'No browser session'
 
 		class ValidationResult(BaseModel):
 			"""
@@ -678,18 +678,15 @@ class Agent(Generic[Context]):
 		validator = self.llm.with_structured_output(ValidationResult, include_raw=True)
 		response: dict[str, Any] = await validator.ainvoke(msg)  # type: ignore
 		parsed: ValidationResult = response['parsed']
-  
-		logger.info(f'[DEBUG] Validator response: {response}')
-		logger.info(f'[DEBUG] Parsed response: {parsed}')
 
 		is_valid = parsed.is_valid
+		reason = parsed.reason
+  
 		if not is_valid:
-			logger.info(f'❌ Validator decision: {parsed.reason}')
-			msg = f'The output is not yet correct. {parsed.reason}.'
+			msg = f'The output is not yet correct. {reason}.'
 			self.state.last_result = [ActionResult(extracted_content=msg, include_in_memory=True)]
-		else:
-			logger.info(f'✅ Validator decision: {parsed.reason}')
-		return is_valid
+
+		return is_valid, reason
 
 
 	async def log_completion(self) -> None:
