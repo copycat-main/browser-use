@@ -64,14 +64,7 @@ class Controller(Generic[Context]):
 				param_model=DoneAction,
 			)
 			async def done(params: DoneAction):
-				return ActionResult(is_done=True, success=params.success, extracted_content=params.text)
-
-		@self.registry.action(
-			'Complete a copycat step - with whether or not the step is finished (success=True) or not yet completly finished (success=False).',
-			param_model=CopycatStepDoneAction,
-		)
-		async def copycat_step_done(params: CopycatStepDoneAction):
-			return ActionResult(is_copycat_step_done=True, success=params.success)		
+				return ActionResult(is_done=True, success=params.success, extracted_content=params.text)	
   
   		# Basic Navigation Actions
 		@self.registry.action(

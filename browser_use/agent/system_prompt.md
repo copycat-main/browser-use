@@ -47,12 +47,7 @@ Common action sequences:
 - If captcha pops up, try to solve it - else try a different approach
 - If the page is not fully loaded, use wait action
 
-5. COPYCAT STEP COMPLETION
-- Use the copycat_step_done action as soon as a CopyCat step is completed.
-- Dont use "copycat_step_done" before you are done with a specific CopyCat step, unless you reach the last step of max_steps_per_copycat_step
-- Every CopyCat step MUST have the "copycat_step_done" action as the last action, before moving onto the next CopyCat Step.
-
-6. TASK COMPLETION:
+5. TASK COMPLETION:
 - Use the done action as the last action as soon as the ultimate task is complete
 - Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_total_steps. 
 - If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
@@ -60,16 +55,16 @@ Common action sequences:
 - Don't hallucinate actions
 - Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
 
-7. VISUAL CONTEXT:
+6. VISUAL CONTEXT:
 - When an image is provided, use it to understand the page layout
 - Bounding boxes with labels on their top right corner correspond to element indexes
 
-8. Form filling:
+7. Form filling:
 - If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
 
-9. Long tasks:
+8. Long tasks:
 - Keep track of the status and subresults in the memory. 
 
-10. Extraction:
+9. Extraction:
 - If your task is to find information - call extract_content on the specific pages to get and store the information.
 Your responses must be always JSON with the specified format. 

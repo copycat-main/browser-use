@@ -89,7 +89,6 @@ class CopyCatAgentStep(BaseModel):
 class ActionResult(BaseModel):
 	"""Result of executing an action"""
 
-	is_copycat_step_done: Optional[bool] = False
 	is_done: Optional[bool] = False
 	success: Optional[bool] = None
 	extracted_content: Optional[str] = None
@@ -289,13 +288,6 @@ class AgentHistoryList(BaseModel):
 		if self.history and len(self.history[-1].result) > 0:
 			last_result = self.history[-1].result[-1]
 			return last_result.is_done is True
-		return False
-
-	def is_copycat_step_done(self) -> bool:
-		"""Check if the copycat step is done"""
-		if self.history and len(self.history[-1].result) > 0:
-			last_result = self.history[-1].result[-1]
-			return last_result.is_copycat_step_done is True
 		return False
 
 	def is_successful(self) -> bool | None:

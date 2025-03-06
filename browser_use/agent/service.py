@@ -558,10 +558,13 @@ class Agent(Generic[Context]):
 					logger.info(f'Copycat step attempt {current_copycat_step_attempt + 1} / {max_steps_per_copycat_step}')
         
 					if current_copycat_step_attempt > 0:
-						msg += f'\nCheck if the step "{copycat_step.description}" is done. Do not move on to the next CopyCat step until you have checked if this one is done NOW.'
-						msg += f'\nIf it is done, use the "copycat_step_done" action with success=True.'
-						msg += f'\nIf it is not yet done, continue as usual.'
-						self._message_manager._add_message_with_tokens(HumanMessage(content=msg))
+						is_done = await self._check_if_copycat_step_is_done(
+							copycat_step=copycat_step.description
+						)
+         
+						if is_done:
+							logger.info(f'✅ Copycat step is done.')
+							break
         
 					# Check if we should stop due to too many failures
 					if self.state.consecutive_failures >= self.settings.max_failures:
@@ -587,10 +590,6 @@ class Agent(Generic[Context]):
 						max_total_steps=max_total_steps
 					)
 					await self.step(step_info)
-
-					if self.state.history.is_copycat_step_done():
-						logger.info('Copycat step done')
-						break
 				else:
 					logger.info('❌ Failed to complete task in maximum steps')
 					should_break_from_outer_loop = True
@@ -706,6 +705,48 @@ class Agent(Generic[Context]):
 		else:
 			logger.info(f'✅ Validator decision: {parsed.reason}')
 		return is_valid
+
+	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> bool:
+		"""Check if the copycat step is done"""
+		system_msg = (
+			f'You are a validator of an agent who interacts with a browser. '
+			f'Validate if the copycat step is done. '
+			f'If the copycat_step is unclear defined, you can let it pass. But if something is missing or the image does not show what was requested dont let it pass. '
+			f'Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right. '
+			f'Task to validate: {copycat_step}. Return a JSON object with 1 key: is_done. '
+			f'is_done is a boolean that indicates if the copycat step is done. '
+			f' example: {{"is_done": true}}'
+		)
+
+		if self.browser_context.session:
+			state = await self.browser_context.get_state()
+			content = AgentMessagePrompt(
+				state=state,
+				result=self.state.last_result,
+				include_attributes=self.settings.include_attributes,
+			)
+			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
+		else:
+			return True
+
+		class ValidationResult(BaseModel):
+			"""
+			Validation results.
+			"""
+			is_done: bool
+
+		validator = self.llm.with_structured_output(ValidationResult, include_raw=True)
+		response: dict[str, Any] = await validator.ainvoke(msg)  # type: ignore
+		parsed: ValidationResult = response['parsed']
+		is_done = parsed.is_done
+		if not is_done:
+			logger.info(f'❌ Copycat step is not done.')
+			msg = f'The copycat step is not done.'
+			self.state.last_result = [ActionResult(extracted_content=msg, include_in_memory=True)]
+		else:
+			logger.info(f'✅ Copycat step is done.')
+		return is_done
+
 
 	async def log_completion(self) -> None:
 		"""Log the completion of the task"""

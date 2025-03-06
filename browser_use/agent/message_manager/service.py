@@ -68,7 +68,7 @@ class MessageManager:
 			steps_message += f'Step {i+1}: {step.description}\n'
 
 		task_message = HumanMessage(
-			content=f'Your ultimate task is to complete all of the following steps in order:\n"""{steps_message}""". Once you complete each step, use the copycat_step_done action in the next step to indicate that you have completed the step.'
+			content=f'Your ultimate task is to complete all of the following steps in order:\n"""{steps_message}""".'
 		)
 		self._add_message_with_tokens(task_message)
 
