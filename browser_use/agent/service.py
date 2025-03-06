@@ -293,7 +293,11 @@ class Agent(Generic[Context]):
 
 	# @observe(name='agent.step', ignore_output=True, ignore_input=True)
 	@time_execution_async('--step (agent)')
-	async def step(self, step_info: Optional[AgentStepInfo] = None) -> None:
+	async def step(
+    	self, 
+		copycat_step_to_validate_before_continuing: Optional[CopyCatAgentStep] = None,
+     	step_info: Optional[AgentStepInfo] = None
+    ) -> bool:
 		"""Execute one step of the task"""
 		logger.info(f'📍 Step {self.state.n_steps}')
 		state = None
@@ -350,6 +354,17 @@ class Agent(Generic[Context]):
 				self._message_manager._remove_last_state_message()
 				raise e
 
+			if copycat_step_to_validate_before_continuing:
+				is_done_with_copycat_step, validator_reason = await self._check_if_copycat_step_is_done(
+					copycat_step=copycat_step_to_validate_before_continuing.description
+				)
+	
+				if is_done_with_copycat_step:
+					logger.info(f'✅ Copycat step is done. {validator_reason}')
+					return True
+				else:
+					logger.info(f'❌ Copycat step is not done. Reason: {validator_reason}. Continuing with next step...')
+
 			result: list[ActionResult] = await self.multi_act(model_output.action)
 
 			self.state.last_result = result
@@ -358,7 +373,6 @@ class Agent(Generic[Context]):
 				logger.info(f'📄 Result: {result[-1].extracted_content}')
 
 			self.state.consecutive_failures = 0
-
 		except InterruptedError:
 			logger.debug('Agent paused')
 			self.state.last_result = [
@@ -366,14 +380,14 @@ class Agent(Generic[Context]):
 					error='The agent was paused - now continuing actions might need to be repeated', include_in_memory=True
 				)
 			]
-			return
+			return False
 		except Exception as e:
 			result = await self._handle_step_error(e)
 			self.state.last_result = result
 
 		finally:
 			if not result:
-				return
+				return False
 
 			if state:
 				metadata = StepMetadata(
@@ -383,6 +397,8 @@ class Agent(Generic[Context]):
 					input_tokens=tokens,
 				)
 				self._make_history_item(model_output, state, result, metadata)
+			
+			return True
 
 	@time_execution_async('--handle_step_error (agent)')
 	async def _handle_step_error(self, error: Exception) -> list[ActionResult]:
@@ -521,7 +537,7 @@ class Agent(Generic[Context]):
 			current_total_steps = 0
 			should_break_from_outer_loop = False
     
-			for copycat_step in self.copycat_agent_steps:
+			for i, copycat_step in enumerate(self.copycat_agent_steps):
 				if should_break_from_outer_loop:
 					break
        
@@ -554,23 +570,25 @@ class Agent(Generic[Context]):
 							logger.info('Agent stopped')
 							should_break_from_outer_loop = True
 							break
-   
-					if current_copycat_step_attempt > 0:
-						is_done_with_copycat_step, validator_reason = await self._check_if_copycat_step_is_done(
-							copycat_step=copycat_step.description
-						)
-			
-						if is_done_with_copycat_step:
-							logger.info(f'✅ Copycat step is done. {validator_reason}')
-							break
-						else:
-							logger.info(f'❌ Copycat step is not done. Reason: {validator_reason}')
 
 					step_info = AgentStepInfo(
 						step_number=current_total_steps,
 						max_total_steps=max_total_steps
 					)
-					await self.step(step_info)
+					if current_copycat_step_attempt > 0 and i > 0:
+						copycat_step_to_validate = self.copycat_agent_steps[i - 1]
+         
+						is_copycat_step_done = await self.step(
+							step_info=step_info, 
+							copycat_step_to_validate_before_continuing=copycat_step_to_validate
+						)
+      
+						if is_copycat_step_done:
+							break
+					else:
+						await self.step(
+							step_info=step_info,
+						)
 				else:
 					logger.info('❌ Failed to complete task in maximum steps')
 					should_break_from_outer_loop = True
@@ -581,7 +599,9 @@ class Agent(Generic[Context]):
 				max_total_steps=max_total_steps,
 				is_last_step=True
 			)
-			await self.step(final_step_info)
+			await self.step(
+				step_info=final_step_info,
+			)
    
 			await self.log_completion()
    	
