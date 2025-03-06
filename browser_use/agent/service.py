@@ -536,15 +536,16 @@ class Agent(Generic[Context]):
      
 					logger.info(f'Copycat step attempt {current_copycat_step_attempt + 1} / {max_steps_per_copycat_step}')
         
-					is_done_with_copycat_step, validator_reason = await self._check_if_copycat_step_is_done(
-						copycat_step=copycat_step.description
-					)
-		
-					if is_done_with_copycat_step:
-						logger.info(f'✅ Copycat step is done. {validator_reason}')
-						break
-					else:
-						logger.info(f'❌ Copycat step is not done. Reason: {validator_reason}')
+					if current_copycat_step_attempt > 0:
+						is_done_with_copycat_step, validator_reason = await self._check_if_copycat_step_is_done(
+							copycat_step=copycat_step.description
+						)
+			
+						if is_done_with_copycat_step:
+							logger.info(f'✅ Copycat step is done. {validator_reason}')
+							break
+						else:
+							logger.info(f'❌ Copycat step is not done. Reason: {validator_reason}')
         
 					# Check if we should stop due to too many failures
 					if self.state.consecutive_failures >= self.settings.max_failures:
