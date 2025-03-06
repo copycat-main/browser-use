@@ -329,9 +329,15 @@ class Agent(Generic[Context]):
 			tokens = self._message_manager.state.history.current_tokens
 
 			try:
-				logger.info(f"the input_messages in the step function: {json.dumps(input_messages, indent=2)}")
-       
+				logger.info(f"CALLING BEFORE GET NEXT ACTION")
+				await self._check_if_copycat_step_is_done(
+        			copycat_step=self.copycat_agent_steps[self.state.n_steps - 1].description, should_log_messages=True
+           		)
 				model_output = await self.get_next_action(input_messages)
+				logger.info(f"CALLING AFTER GET NEXT ACTION")
+				await self._check_if_copycat_step_is_done(
+        			copycat_step=self.copycat_agent_steps[self.state.n_steps - 1].description, should_log_messages=True
+           		)
 
 				self.state.n_steps += 1
 
@@ -644,7 +650,7 @@ class Agent(Generic[Context]):
 
 		return results
 
-	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> tuple[bool, str]:
+	async def _check_if_copycat_step_is_done(self, copycat_step: str, should_log_messages: bool = False) -> tuple[bool, str]:
 		"""Validate the output of the last action is what the user wanted"""
 		system_msg = (
 			f'You are a validator of an agent who interacts with a browser. '
@@ -666,6 +672,9 @@ class Agent(Generic[Context]):
 				include_attributes=self.settings.include_attributes,
 			)
 			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
+   
+			if should_log_messages:
+				logger.info(f"the msg in the check_if_copycat_step_is_done function: {json.dumps(msg, indent=2)}")
 		else:
 			# if no browser session, we can't validate the output
 			return False, 'No browser session'
