@@ -575,8 +575,13 @@ class Agent(Generic[Context]):
 						step_number=current_total_steps,
 						max_total_steps=max_total_steps
 					)
-					if current_copycat_step_attempt > 0 and i > 0:
-						copycat_step_to_validate = self.copycat_agent_steps[i - 1]
+					if current_copycat_step_attempt > 0:
+						copycat_step_to_validate = None
+      
+						if i > 0:
+							copycat_step_to_validate = self.copycat_agent_steps[i - 1]
+						else:
+							copycat_step_to_validate = self.copycat_agent_steps[i]
          
 						is_copycat_step_done = await self.step(
 							step_info=step_info, 
