@@ -297,7 +297,6 @@ class Agent(Generic[Context]):
      step_info: Optional[AgentStepInfo] = None
     ) -> None:
 		"""Execute one step of the task"""
-		logger.info(f'📍 Step {self.state.n_steps}')
 		state = None
 		model_output = None
 		result: list[ActionResult] = []
@@ -533,8 +532,6 @@ class Agent(Generic[Context]):
 				msg += f'\nYou are NOT ALLOWED to move on to the next CopyCat step until you have completed the current one.'
 				msg += f'\nThe most important thing is to NOT move on to the next CopyCat step until you have completed the current one.'
 				self._message_manager._add_message_with_tokens(HumanMessage(content=msg))
-    
-				logger.info(f"Added the following step to the message history: {msg}")
        
 				for current_copycat_step_attempt in range(max_steps_per_copycat_step):
 					current_total_steps += 1
