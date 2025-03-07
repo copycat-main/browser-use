@@ -557,12 +557,9 @@ class Agent(Generic[Context]):
 							should_break_from_outer_loop = True
 							break
    
-					most_recent_browser_state = await self.browser_context.get_state()
-   
 					if current_copycat_step_attempt > 0:
 						is_done_with_copycat_step, validator_reason = await self._check_if_copycat_step_is_done(
-							copycat_step=copycat_step.description,
-							most_recent_browser_state=most_recent_browser_state
+							copycat_step=copycat_step.description
 						)
 			
 						if is_done_with_copycat_step:
@@ -652,7 +649,7 @@ class Agent(Generic[Context]):
 
 		return results
 
-	async def _check_if_copycat_step_is_done(self, copycat_step: str, most_recent_browser_state: BrowserState) -> tuple[bool, str]:
+	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> tuple[bool, str]:
 		"""Validate the output of the last action is what the user wanted"""
 		system_msg = (
 			f'You are a validator of an agent who interacts with a browser. '
@@ -663,13 +660,15 @@ class Agent(Generic[Context]):
 			f'If the task has to do with extracting data, do NOT check if the data is correct or matching. Just verify that ANY data has been extracted. Do NOT hallucinate here. '
 			f'Task to validate: {copycat_step}. Return a JSON object with 2 keys: is_valid and reason. '
 			f'is_valid is a boolean that indicates if the output is correct. '
-			f'reason is a string that explains why it is valid or not. If the last action output had an error message, use that as the reason. If not, explain why it is valid or not.'
+			f'reason is a string that explains why it is valid or not.'
 			f' example: {{"is_valid": false, "reason": "The user wanted to search for "cat photos", but the agent searched for "dog photos" instead."}}'
 		)
 
 		if self.browser_context.session:
+			browser_state = await self.browser_context.get_state()
+   
 			content = AgentMessagePrompt(
-				state=most_recent_browser_state,
+				state=browser_state,
 				result=self.state.last_result,
 				include_attributes=self.settings.include_attributes
 			)
@@ -694,7 +693,16 @@ class Agent(Generic[Context]):
 		reason = parsed.reason
   
 		if not is_valid:
-			msg = f'The output is not yet correct. {reason}.'
+			msg = f'The output is not yet correct.'
+   
+			if self.state.last_result is not None:
+				errors = [r.error for r in self.state.last_result if r.error]
+				if errors and len(errors) > 0:
+					concatenated_errors = '. '.join(errors)
+					msg += f'  {concatenated_errors}'
+			else:
+				msg += f' {reason}'
+   
 			self.state.last_result = [ActionResult(extracted_content=msg, include_in_memory=True)]
 
 		return is_valid, reason
