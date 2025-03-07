@@ -664,18 +664,20 @@ class Agent(Generic[Context]):
 			f' example: {{"is_valid": false, "reason": "The user wanted to search for "cat photos", but the agent searched for "dog photos" instead."}}'
 		)
 
-		if self.browser_context.session:
-			browser_state = await self.browser_context.get_state()
+		try:
+			if self.browser_context.session:
+				browser_state = await self.browser_context.get_state()
    
-			content = AgentMessagePrompt(
-				state=browser_state,
-				result=self.state.last_result,
-				include_attributes=self.settings.include_attributes
-			)
-			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
-		else:
-			# if no browser session, we can't validate the output
-			return False, 'No browser session'
+				content = AgentMessagePrompt(
+					state=browser_state,
+					result=self.state.last_result,
+					include_attributes=self.settings.include_attributes
+				)
+				msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
+			else:
+				return False, 'No browser session'
+		except Exception as e:
+			return False, 'Error getting browser state'
 
 		class ValidationResult(BaseModel):
 			"""
