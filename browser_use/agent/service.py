@@ -663,6 +663,16 @@ class Agent(Generic[Context]):
 			f'reason is a string that explains why it is valid or not.'
 			f' example: {{"is_valid": false, "reason": "The user wanted to search for "cat photos", but the agent searched for "dog photos" instead."}}'
 		)
+  
+		if self.state.last_result is not None:
+			errors = [r.error for r in self.state.last_result if r.error]
+   
+			if errors and len(errors) > 0:
+				concatenated_errors = '. '.join(errors)
+				msg = f'The output is not yet correct. {concatenated_errors}'
+				self.state.last_result = [ActionResult(extracted_content=msg, include_in_memory=True)]
+    
+				return False, msg
 
 		try:
 			if self.browser_context.session:
