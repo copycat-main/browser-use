@@ -663,7 +663,7 @@ class Agent(Generic[Context]):
 			f'If the output of the last action has succcess=False, then the task is not done. '
 			f'If the task is unclear defined, you can let it pass. But if something is missing or the image does not show what was requested dont let it pass. '
 			f'Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right. '
-			f'If the task has to do with extracting data, you dont have to check if the data is correct or do any calculations or validations. Just verify that data has been extracted. '
+			f'If the task has to do with extracting data, do NOT check if the data is correct or matching. Just verify that ANY data has been extracted. Do NOT hallucinate here. '
 			f'Task to validate: {copycat_step}. Return a JSON object with 2 keys: is_valid and reason. '
 			f'is_valid is a boolean that indicates if the output is correct. '
 			f'reason is a string that explains why it is valid or not. If the last action output had an error message, use that as the reason. If not, explain why it is valid or not.'
