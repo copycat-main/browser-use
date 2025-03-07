@@ -704,8 +704,10 @@ class Agent(Generic[Context]):
 				msg += f' {reason}'
    
 			self.state.last_result = [ActionResult(extracted_content=msg, include_in_memory=True)]
-
-		return is_valid, reason
+		else:
+			msg = reason
+   
+		return is_valid, msg
 
 
 	async def log_completion(self) -> None:
