@@ -85,6 +85,11 @@ class AgentStepInfo:
 
 class CopyCatAgentStep(BaseModel):
 	description: str
+ 
+class CopyCatAgentIfStep(CopyCatAgentStep):
+	condition_to_check: str
+	then_step: CopyCatAgentStep
+	else_step: Optional[CopyCatAgentStep] = None
 
 class ActionResult(BaseModel):
 	"""Result of executing an action"""

@@ -6,8 +6,17 @@ import logging
 import re
 import time
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, Generic, List, Optional, TypeVar
-
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+)
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import (
@@ -31,6 +40,7 @@ from browser_use.agent.views import (
 	AgentState,
 	AgentStepInfo,
 	CopyCatAgentStep,
+	CopyCatAgentIfStep,
 	StepMetadata,
 	ToolCallingMethod,
 )
@@ -55,7 +65,7 @@ class Agent(Generic[Context]):
 	@time_execution_sync('--init (agent)')
 	def __init__(
 		self,
-		copycat_agent_steps: List[CopyCatAgentStep],
+		copycat_agent_steps: List[Union[CopyCatAgentStep, CopyCatAgentIfStep]],
 		llm: BaseChatModel,
 		# Optional parameters
 		browser: Browser | None = None,
