@@ -63,9 +63,9 @@ class Controller(Generic[Context]):
 				param_model=DoneAction,
 			)
 			async def done(params: DoneAction):
-				return ActionResult(is_done=True, success=params.success, extracted_content=params.text)
-
-		# Basic Navigation Actions
+				return ActionResult(is_done=True, success=params.success, extracted_content=params.text)	
+  
+  		# Basic Navigation Actions
 		@self.registry.action(
 			'Search the query in Google in the current tab, the query should be a search query like humans search in Google, concrete and not vague or super long. More the single most important items. ',
 			param_model=SearchGoogleAction,
@@ -87,6 +87,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
 
 			page = await browser.get_current_page()
@@ -102,7 +103,6 @@ class Controller(Generic[Context]):
 			msg = '🔙  Navigated back'
 			logger.info(msg)
 			return ActionResult(extracted_content=msg, include_in_memory=True)
-
 
 		# Element Interaction Actions
 		@self.registry.action(
@@ -120,6 +120,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
       
 			session = await browser.get_session()
@@ -172,6 +173,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
       
 			if params.index not in await browser.get_selector_map():
@@ -207,6 +209,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
 
 			await browser.create_new_tab(params.url)
@@ -229,6 +232,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
    
 			import markdownify
@@ -263,6 +267,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
    
 			if params.amount is not None:
@@ -294,6 +299,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
    
 			if params.amount is not None:
@@ -325,6 +331,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					include_in_memory=True,
 					error=msg,
+					success=False,
 				)
 
 			try:

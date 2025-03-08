@@ -14,7 +14,13 @@ from pydantic import BaseModel
 
 from browser_use.agent.message_manager.views import MessageMetadata
 from browser_use.agent.prompts import AgentMessagePrompt
-from browser_use.agent.views import ActionResult, AgentOutput, AgentStepInfo, MessageManagerState
+from browser_use.agent.views import (
+	ActionResult,
+	AgentOutput,
+	AgentStepInfo,
+	MessageManagerState,
+ 	CopyCatAgentStep
+)
 from browser_use.browser.views import BrowserState
 from browser_use.utils import time_execution_sync
 
@@ -34,12 +40,10 @@ class MessageManagerSettings(BaseModel):
 class MessageManager:
 	def __init__(
 		self,
-		task: str,
 		system_message: SystemMessage,
 		settings: MessageManagerSettings = MessageManagerSettings(),
 		state: MessageManagerState = MessageManagerState(),
 	):
-		self.task = task
 		self.settings = settings
 		self.state = state
 		self.system_prompt = system_message
@@ -57,7 +61,7 @@ class MessageManager:
 			self._add_message_with_tokens(context_message)
 
 		task_message = HumanMessage(
-			content=f'Your ultimate task is: """{self.task}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.'
+			content=f'Your ultimate task is to complete all of the CopyCat steps that will be given to you. NEVER use the "done" action unless explicitly told to do so.'
 		)
 		self._add_message_with_tokens(task_message)
 
@@ -99,12 +103,6 @@ class MessageManager:
 		if self.settings.available_file_paths:
 			filepaths_msg = HumanMessage(content=f'Here are file paths you can use: {self.settings.available_file_paths}')
 			self._add_message_with_tokens(filepaths_msg)
-
-	def add_new_task(self, new_task: str) -> None:
-		content = f'Your new ultimate task is: """{new_task}""". Take the previous context into account and finish your new ultimate task. '
-		msg = HumanMessage(content=content)
-		self._add_message_with_tokens(msg)
-		self.task = new_task
 
 	@time_execution_sync('--add_state_message')
 	def add_state_message(
