@@ -19,7 +19,7 @@ from browser_use.agent.views import (
 	AgentOutput,
 	AgentStepInfo,
 	MessageManagerState,
- 	CopyCatAgentStep
+ 	CopyCatStep
 )
 from browser_use.browser.views import BrowserState
 from browser_use.utils import time_execution_sync
@@ -40,10 +40,12 @@ class MessageManagerSettings(BaseModel):
 class MessageManager:
 	def __init__(
 		self,
+		copycat_steps: List[CopyCatStep],
 		system_message: SystemMessage,
 		settings: MessageManagerSettings = MessageManagerSettings(),
 		state: MessageManagerState = MessageManagerState(),
 	):
+		self.copycat_steps = copycat_steps
 		self.settings = settings
 		self.state = state
 		self.system_prompt = system_message
@@ -60,8 +62,13 @@ class MessageManager:
 			context_message = HumanMessage(content='Context for the task' + self.settings.message_context)
 			self._add_message_with_tokens(context_message)
 
+		steps_message = ""
+  
+		for i, step in enumerate(self.copycat_steps):
+			steps_message += f'Step {i+1}: {step.description}\n'
+
 		task_message = HumanMessage(
-			content=f'Your ultimate task is to complete all of the CopyCat steps that will be given to you. NEVER use the "done" action unless explicitly told to do so.'
+			content=f'Your ultimate task is to perform the following steps in order:\n"""{steps_message}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.'
 		)
 		self._add_message_with_tokens(task_message)
 
