@@ -30,7 +30,7 @@ from browser_use.agent.views import (
 	AgentSettings,
 	AgentState,
 	AgentStepInfo,
-	CopyCatAgentStep,
+	CopyCatStep,
 	StepMetadata,
 	ToolCallingMethod,
 )
@@ -55,7 +55,7 @@ class Agent(Generic[Context]):
 	@time_execution_sync('--init (agent)')
 	def __init__(
 		self,
-		copycat_agent_steps: List[CopyCatAgentStep],
+		copycat_steps: List[CopyCatStep],
 		llm: BaseChatModel,
 		# Optional parameters
 		browser: Browser | None = None,
@@ -109,7 +109,7 @@ class Agent(Generic[Context]):
 			page_extraction_llm = llm
 
 		# Core components
-		self.copycat_agent_steps = copycat_agent_steps
+		self.copycat_steps = copycat_steps
 		self.llm = llm
 		self.controller = controller
 		self.sensitive_data = sensitive_data
@@ -156,6 +156,7 @@ class Agent(Generic[Context]):
 
 		# Initialize message manager with state
 		self._message_manager = MessageManager(
+			copycat_steps=copycat_steps,
 			system_message=SystemPrompt(
 				action_description=self.available_actions,
 				max_actions_per_step=self.settings.max_actions_per_step,
@@ -259,7 +260,7 @@ class Agent(Generic[Context]):
 		# Create output model with the dynamic actions
 		self.AgentOutput = AgentOutput.type_with_custom_actions(self.ActionModel)
 
-		# used to force the done action when max_total_steps is reached
+		# used to force the done action when max_steps is reached
 		self.DoneActionModel = self.controller.registry.create_action_model(include_actions=['done'])
 		self.DoneAgentOutput = AgentOutput.type_with_custom_actions(self.DoneActionModel)
 
@@ -292,11 +293,9 @@ class Agent(Generic[Context]):
 
 	# @observe(name='agent.step', ignore_output=True, ignore_input=True)
 	@time_execution_async('--step (agent)')
-	async def step(
-     self,
-     step_info: Optional[AgentStepInfo] = None
-    ) -> None:
+	async def step(self, step_info: Optional[AgentStepInfo] = None) -> None:
 		"""Execute one step of the task"""
+		logger.info(f'📍 Step {self.state.n_steps}')
 		state = None
 		model_output = None
 		result: list[ActionResult] = []
@@ -316,7 +315,7 @@ class Agent(Generic[Context]):
 				# add plan before last state message
 				self._message_manager.add_plan(plan, position=-1)
 
-			if step_info and step_info.is_last_step:
+			if step_info and step_info.is_last_step():
 				# Add last step warning if needed
 				msg = 'Now comes your last step. Use only the "done" action now. No other actions - so here your action sequence musst have length 1.'
 				msg += '\nIf the task is not yet fully finished as requested by the user, set success in "done" to false! E.g. if not all steps are fully completed.'
@@ -500,17 +499,34 @@ class Agent(Generic[Context]):
 
 	def _log_agent_run(self) -> None:
 		"""Log the agent run"""
-		logger.info(f'🚀 Starting task: {self.copycat_agent_steps}')
+		logger.info(f'🚀 Starting task: {self.copycat_steps}')
 
 		logger.debug(f'Version: {self.version}, Source: {self.source}')
 
+	async def take_step(self) -> tuple[bool, bool]:
+		"""Take a step
+
+		Returns:
+			Tuple[bool, bool]: (is_done, is_valid)
+		"""
+		await self.step()
+
+		if self.state.history.is_done():
+			if self.settings.validate_output:
+				if not await self._validate_output():
+					return True, False
+
+			await self.log_completion()
+			if self.register_done_callback:
+				await self.register_done_callback(self.state.history)
+
+			return True, True
+
+		return False, False
+
 	# @observe(name='agent.run', ignore_output=True)
 	@time_execution_async('--run (agent)')
-	async def run(
-		self,
-  		max_total_steps: int,
-		max_steps_per_copycat_step: int
-    ) -> AgentHistoryList:
+	async def run(self, max_steps: int = 100) -> AgentHistoryList:
 		"""Execute the task with maximum number of steps"""
 		try:
 			self._log_agent_run()
@@ -520,78 +536,35 @@ class Agent(Generic[Context]):
 				result = await self.multi_act(self.initial_actions, check_for_new_elements=False)
 				self.state.last_result = result
 
-			current_total_steps = 0
-			should_break_from_outer_loop = False
-    
-			for copycat_step in self.copycat_agent_steps:
-				if should_break_from_outer_loop:
-					break
-     
-				msg = f'\nYour current task is to complete the following CopyCat step:'
-				msg += f'\n"{copycat_step.description}"'
-				msg += f'\nYou are NOT ALLOWED to move on to the next CopyCat step until you have completed the current one.'
-				msg += f'\nThe most important thing is to NOT move on to the next CopyCat step until you have completed the current one.'
-				self._message_manager._add_message_with_tokens(HumanMessage(content=msg))
-       
-				for current_copycat_step_attempt in range(max_steps_per_copycat_step):
-					current_total_steps += 1
-     
-					logger.info(f'Copycat step attempt {current_copycat_step_attempt + 1} / {max_steps_per_copycat_step}')
-        
-					# Check if we should stop due to too many failures
-					if self.state.consecutive_failures >= self.settings.max_failures:
-						logger.info(f'❌ Stopping due to {self.settings.max_failures} consecutive failures')
-						should_break_from_outer_loop = True
-						break
-
-					# Check control flags before each step
-					if self.state.stopped:
-						logger.info('Agent stopped')
-						should_break_from_outer_loop = True
-						break
-
-					while self.state.paused:
-						await asyncio.sleep(0.2)  # Small delay to prevent CPU spinning
-						if self.state.stopped:  # Allow stopping while paused
-							logger.info('Agent stopped')
-							should_break_from_outer_loop = True
-							break
-   
-					if current_copycat_step_attempt > 0:
-						is_done_with_copycat_step, validator_reason = await self._check_if_copycat_step_is_done(
-							copycat_step=copycat_step.description
-						)
-			
-						if is_done_with_copycat_step:
-							logger.info(f'✅ Copycat step is done. {validator_reason}')
-							break
-						else:
-							logger.info(f'❌ Copycat step is not done. Reason: {validator_reason}')
-
-					step_info = AgentStepInfo(
-						step_number=current_total_steps,
-						max_total_steps=max_total_steps
-					)
-					await self.step(
-						step_info=step_info
-					)
-				else:
-					logger.info('❌ Failed to complete task in maximum steps')
-					should_break_from_outer_loop = True
+			for step in range(max_steps):
+				# Check if we should stop due to too many failures
+				if self.state.consecutive_failures >= self.settings.max_failures:
+					logger.info(f'❌ Stopping due to {self.settings.max_failures} consecutive failures')
 					break
 
-			final_step_info = AgentStepInfo(
-				step_number=current_total_steps,
-				max_total_steps=max_total_steps,
-				is_last_step=True
-			)
-   
-			await self.step(
-				step_info=final_step_info
-			)
-   
-			await self.log_completion()
-   	
+				# Check control flags before each step
+				if self.state.stopped:
+					logger.info('Agent stopped')
+					break
+
+				while self.state.paused:
+					await asyncio.sleep(0.2)  # Small delay to prevent CPU spinning
+					if self.state.stopped:  # Allow stopping while paused
+						break
+
+				step_info = AgentStepInfo(step_number=step, max_steps=max_steps)
+				await self.step(step_info)
+
+				if self.state.history.is_done():
+					if self.settings.validate_output and step < max_steps - 1:
+						if not await self._validate_output():
+							continue
+
+					await self.log_completion()
+					break
+			else:
+				logger.info('❌ Failed to complete task in maximum steps')
+
 			return self.state.history
 		finally:
 			if not self.injected_browser_context:
@@ -649,45 +622,30 @@ class Agent(Generic[Context]):
 
 		return results
 
-	async def _check_if_copycat_step_is_done(self, copycat_step: str) -> tuple[bool, str]:
+	async def _validate_output(self) -> bool:
 		"""Validate the output of the last action is what the user wanted"""
 		system_msg = (
 			f'You are a validator of an agent who interacts with a browser. '
 			f'Validate if the output of last action is what the user wanted and if the task is completed. '
-			f'If the output of the last action has succcess=False, then the task is not done. '
 			f'If the task is unclear defined, you can let it pass. But if something is missing or the image does not show what was requested dont let it pass. '
 			f'Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right. '
-			f'If the task has to do with extracting data, do NOT check if the data is correct or matching. Just verify that ANY data has been extracted. Do NOT hallucinate here. '
-			f'Task to validate: {copycat_step}. Return a JSON object with 2 keys: is_valid and reason. '
+			f'Task to validate: {self.copycat_steps}. Return a JSON object with 2 keys: is_valid and reason. '
 			f'is_valid is a boolean that indicates if the output is correct. '
 			f'reason is a string that explains why it is valid or not.'
 			f' example: {{"is_valid": false, "reason": "The user wanted to search for "cat photos", but the agent searched for "dog photos" instead."}}'
 		)
-  
-		if self.state.last_result is not None:
-			errors = [r.error for r in self.state.last_result if r.error]
-   
-			if errors and len(errors) > 0:
-				concatenated_errors = '. '.join(errors)
-				msg = f'The output is not yet correct. {concatenated_errors}'
-				self.state.last_result = [ActionResult(extracted_content=msg, include_in_memory=True)]
-    
-				return False, msg
 
-		try:
-			if self.browser_context.session:
-				browser_state = await self.browser_context.get_state()
-   
-				content = AgentMessagePrompt(
-					state=browser_state,
-					result=self.state.last_result,
-					include_attributes=self.settings.include_attributes
-				)
-				msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
-			else:
-				return False, 'No browser session'
-		except Exception as e:
-			return False, 'Error getting browser state'
+		if self.browser_context.session:
+			state = await self.browser_context.get_state()
+			content = AgentMessagePrompt(
+				state=state,
+				result=self.state.last_result,
+				include_attributes=self.settings.include_attributes,
+			)
+			msg = [SystemMessage(content=system_msg), content.get_user_message(self.settings.use_vision)]
+		else:
+			# if no browser session, we can't validate the output
+			return True
 
 		class ValidationResult(BaseModel):
 			"""
@@ -700,27 +658,14 @@ class Agent(Generic[Context]):
 		validator = self.llm.with_structured_output(ValidationResult, include_raw=True)
 		response: dict[str, Any] = await validator.ainvoke(msg)  # type: ignore
 		parsed: ValidationResult = response['parsed']
-
 		is_valid = parsed.is_valid
-		reason = parsed.reason
-  
 		if not is_valid:
-			msg = f'The output is not yet correct.'
-   
-			if self.state.last_result is not None:
-				errors = [r.error for r in self.state.last_result if r.error]
-				if errors and len(errors) > 0:
-					concatenated_errors = '. '.join(errors)
-					msg += f'  {concatenated_errors}'
-			else:
-				msg += f' {reason}'
-   
+			logger.info(f'❌ Validator decision: {parsed.reason}')
+			msg = f'The output is not yet correct. {parsed.reason}.'
 			self.state.last_result = [ActionResult(extracted_content=msg, include_in_memory=True)]
 		else:
-			msg = reason
-   
-		return is_valid, msg
-
+			logger.info(f'✅ Validator decision: {parsed.reason}')
+		return is_valid
 
 	async def log_completion(self) -> None:
 		"""Log the completion of the task"""
