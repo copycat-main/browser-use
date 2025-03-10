@@ -80,10 +80,13 @@ class AgentState(BaseModel):
 @dataclass
 class AgentStepInfo:
 	step_number: int
-	max_total_steps: int
-	is_last_step: Optional[bool] = False
+	max_steps: int
 
-class CopyCatAgentStep(BaseModel):
+	def is_last_step(self) -> bool:
+		"""Check if this is the last step"""
+		return self.step_number >= self.max_steps - 1
+
+class CopyCatStep(BaseModel):
 	description: str
 
 class ActionResult(BaseModel):
