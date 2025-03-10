@@ -19,7 +19,7 @@ from browser_use.agent.views import (
 	AgentOutput,
 	AgentStepInfo,
 	MessageManagerState,
- 	CopyCatAgentStep
+ 	CopyCatStep
 )
 from browser_use.browser.views import BrowserState
 from browser_use.utils import time_execution_sync
@@ -40,12 +40,12 @@ class MessageManagerSettings(BaseModel):
 class MessageManager:
 	def __init__(
 		self,
-		steps: List[CopyCatAgentStep],
+		copycat_steps: List[CopyCatStep],
 		system_message: SystemMessage,
 		settings: MessageManagerSettings = MessageManagerSettings(),
 		state: MessageManagerState = MessageManagerState(),
 	):
-		self.steps = steps
+		self.copycat_steps = copycat_steps
 		self.settings = settings
 		self.state = state
 		self.system_prompt = system_message
@@ -64,7 +64,7 @@ class MessageManager:
 
 		steps_message = ""
   
-		for i, step in enumerate(self.steps):
+		for i, step in enumerate(self.copycat_steps):
 			steps_message += f'Step {i+1}: {step.description}\n'
 
 		task_message = HumanMessage(

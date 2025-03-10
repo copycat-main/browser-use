@@ -86,7 +86,7 @@ class AgentStepInfo:
 		"""Check if this is the last step"""
 		return self.step_number >= self.max_steps - 1
 
-class CopyCatAgentStep(BaseModel):
+class CopyCatStep(BaseModel):
 	description: str
 
 class ActionResult(BaseModel):
