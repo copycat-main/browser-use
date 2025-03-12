@@ -128,7 +128,8 @@ class Controller(Generic[Context]):
 				raise Exception(f'Element with index {params.index} does not exist - retry or use alternative actions')
 
 			element_node = await browser.get_dom_element_by_index(params.index)
-    
+			logger.info(f'Element xpath for click: {element_node.xpath}')
+   
 			initial_pages = len(session.context.pages)
 
 			# if element has file uploader then dont click
@@ -178,6 +179,10 @@ class Controller(Generic[Context]):
 				raise Exception(f'Element index {params.index} does not exist - retry or use alternative actions')
 
 			element_node = await browser.get_dom_element_by_index(params.index)
+			
+			# print the xpath of the element
+			logger.info(f'Element xpath for input: {element_node.xpath}')
+   
 			await browser._input_text_element_node(element_node, params.text)
 			if not has_sensitive_data:
 				msg = f'⌨️  Input {params.text} into index {params.index}'
