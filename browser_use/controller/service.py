@@ -152,7 +152,7 @@ class Controller(Generic[Context]):
 					msg += f' - {new_tab_msg}'
 					logger.info(new_tab_msg)
 					await browser.switch_to_tab(-1)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(extracted_content=msg, include_in_memory=True, element_xpath=element_node.xpath)
 			except Exception as e:
 				logger.warning(f'Element not clickable with index {params.index} - most likely the page changed')
 				return ActionResult(error=str(e))
@@ -185,7 +185,7 @@ class Controller(Generic[Context]):
 				msg = f'⌨️  Input sensitive data into index {params.index}'
 			logger.info(msg)
 			logger.debug(f'Element xpath: {element_node.xpath}')
-			return ActionResult(extracted_content=msg, include_in_memory=True)
+			return ActionResult(extracted_content=msg, include_in_memory=True, element_xpath=element_node.xpath)
 
 		# Tab Management Actions
 		@self.registry.action('Switch tab', param_model=SwitchTabAction)
