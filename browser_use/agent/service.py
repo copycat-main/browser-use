@@ -55,7 +55,7 @@ class Agent(Generic[Context]):
 	@time_execution_sync('--init (agent)')
 	def __init__(
 		self,
-		copycat_steps: List[CopyCatStep],
+		copycat_step: CopyCatStep,
 		llm: BaseChatModel,
 		# Optional parameters
 		browser: Browser | None = None,
@@ -109,7 +109,7 @@ class Agent(Generic[Context]):
 			page_extraction_llm = llm
 
 		# Core components
-		self.copycat_steps = copycat_steps
+		self.copycat_step = copycat_step
 		self.llm = llm
 		self.controller = controller
 		self.sensitive_data = sensitive_data
@@ -156,7 +156,7 @@ class Agent(Generic[Context]):
 
 		# Initialize message manager with state
 		self._message_manager = MessageManager(
-			copycat_steps=copycat_steps,
+			copycat_step=copycat_step,
 			system_message=SystemPrompt(
 				action_description=self.available_actions,
 				max_actions_per_step=self.settings.max_actions_per_step,
@@ -499,7 +499,7 @@ class Agent(Generic[Context]):
 
 	def _log_agent_run(self) -> None:
 		"""Log the agent run"""
-		logger.info(f'🚀 Starting task: {self.copycat_steps}')
+		logger.info(f'🚀 Starting task: {self.copycat_step}')
 
 		logger.debug(f'Version: {self.version}, Source: {self.source}')
 
@@ -629,7 +629,7 @@ class Agent(Generic[Context]):
 			f'Validate if the output of last action is what the user wanted and if the task is completed. '
 			f'If the task is unclear defined, you can let it pass. But if something is missing or the image does not show what was requested dont let it pass. '
 			f'Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right. '
-			f'Task to validate: {self.copycat_steps}. Return a JSON object with 2 keys: is_valid and reason. '
+			f'Task to validate: {self.copycat_step}. Return a JSON object with 2 keys: is_valid and reason. '
 			f'is_valid is a boolean that indicates if the output is correct. '
 			f'reason is a string that explains why it is valid or not.'
 			f' example: {{"is_valid": false, "reason": "The user wanted to search for "cat photos", but the agent searched for "dog photos" instead."}}'
