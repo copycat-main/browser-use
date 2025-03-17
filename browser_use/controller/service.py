@@ -49,7 +49,7 @@ class Controller(Generic[Context]):
 				success: bool = True
 
 			@self.registry.action(
-				'Complete task - with return text and if the task is finished (success=True) or not yet  completly finished (success=False), because last step is reached',
+				'Complete task - with return text and if the task is finished (success=True) or not yet  completly finished (success=False), because last step is reached. This is known as the done action. As soon as the ultimate task is finished, use this action to complete the task.',
 				param_model=ExtendedOutputModel,
 			)
 			async def done(params: ExtendedOutputModel):
@@ -59,7 +59,7 @@ class Controller(Generic[Context]):
 		else:
 
 			@self.registry.action(
-				'Complete task - with return text and if the task is finished (success=True) or not yet  completly finished (success=False), because last step is reached',
+				'Complete task - with return text and if the task is finished (success=True) or not yet  completly finished (success=False), because last step is reached. This is known as the done action. As soon as the ultimate task is finished, use this action to complete the task.',
 				param_model=DoneAction,
 			)
 			async def done(params: DoneAction):

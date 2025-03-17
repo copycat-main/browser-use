@@ -499,7 +499,7 @@ class Agent(Generic[Context]):
 
 	def _log_agent_run(self) -> None:
 		"""Log the agent run"""
-		logger.info(f'🚀 Starting task: {self.copycat_step}')
+		logger.info(f'🚀 Starting task: {self.copycat_step.description}')
 
 		logger.debug(f'Version: {self.version}, Source: {self.source}')
 
