@@ -55,15 +55,26 @@ class Controller(Generic[Context]):
 			async def done(params: ExtendedOutputModel):
 				# Exclude success from the output JSON since it's an internal parameter
 				output_dict = params.model_dump(exclude={'success'})
-				return ActionResult(is_done=True, success=params.success, extracted_content=json.dumps(output_dict))
+				return ActionResult(
+					is_done=True,
+					success=params.success,
+					extracted_content=json.dumps(output_dict),
+					action_name='done',
+					action_params=output_dict,
+				)
 		else:
-
 			@self.registry.action(
 				'Complete task - with return text and if the task is finished (success=True) or not yet  completly finished (success=False), because last step is reached. This is known as the done action. As soon as the ultimate task is finished, use this action to complete the task.',
 				param_model=DoneAction,
 			)
 			async def done(params: DoneAction):
-				return ActionResult(is_done=True, success=params.success, extracted_content=params.text)
+				return ActionResult(
+					is_done=True,
+					success=params.success,
+					extracted_content=params.text,
+					action_name='done',
+					action_params=params.model_dump(),
+				)
 
 		# Basic Navigation Actions
 		@self.registry.action(
@@ -76,7 +87,12 @@ class Controller(Generic[Context]):
 			await page.wait_for_load_state()
 			msg = f'🔍  Searched for "{params.query}" in Google'
 			logger.info(msg)
-			return ActionResult(extracted_content=msg, include_in_memory=True)
+			return ActionResult(
+				extracted_content=msg,
+				include_in_memory=True,
+				action_name='search_google',
+				action_params=params.model_dump(),
+			)
 
 		@self.registry.action('If URL doesn\'t include docs.google.com/spreadsheets, navigate to URL in the current tab.', param_model=GoToUrlAction)
 		async def go_to_url(params: GoToUrlAction, browser: BrowserContext):
@@ -94,14 +110,24 @@ class Controller(Generic[Context]):
 			await page.wait_for_load_state()
 			msg = f'🔗  Navigated to {params.url}'
 			logger.info(msg)
-			return ActionResult(extracted_content=msg, include_in_memory=True)
+			return ActionResult(
+				extracted_content=msg,
+				include_in_memory=True,
+				action_name='go_to_url',
+				action_params=params.model_dump(),
+			)
 
 		@self.registry.action('Go back', param_model=NoParamsAction)
 		async def go_back(_: NoParamsAction, browser: BrowserContext):
 			await browser.go_back()
 			msg = '🔙  Navigated back'
 			logger.info(msg)
-			return ActionResult(extracted_content=msg, include_in_memory=True)
+			return ActionResult(
+				extracted_content=msg,
+				include_in_memory=True,
+				action_name='go_back',
+				action_params={},
+			)
 
 
 		# Element Interaction Actions
@@ -135,7 +161,10 @@ class Controller(Generic[Context]):
 			if await browser.is_file_uploader(element_node):
 				msg = f'Index {params.index} - has an element which opens file upload dialog. To upload files please use a specific function to upload files '
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+				)
 
 			msg = None
 
@@ -152,7 +181,12 @@ class Controller(Generic[Context]):
 					msg += f' - {new_tab_msg}'
 					logger.info(new_tab_msg)
 					await browser.switch_to_tab(-1)
-				return ActionResult(extracted_content=msg, include_in_memory=True, element_xpath=element_node.xpath)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					action_name='click_element',
+					action_params={**params.model_dump(), 'xpath': element_node.xpath},
+				)
 			except Exception as e:
 				logger.warning(f'Element not clickable with index {params.index} - most likely the page changed')
 				return ActionResult(error=str(e))
@@ -185,7 +219,12 @@ class Controller(Generic[Context]):
 				msg = f'⌨️  Input sensitive data into index {params.index}'
 			logger.info(msg)
 			logger.debug(f'Element xpath: {element_node.xpath}')
-			return ActionResult(extracted_content=msg, include_in_memory=True, element_xpath=element_node.xpath)
+			return ActionResult(
+       			extracted_content=msg, 
+       			include_in_memory=True,
+				action_name='input_text',
+				action_params={**params.model_dump(), 'xpath': element_node.xpath},
+			)
 
 		# Tab Management Actions
 		@self.registry.action('Switch tab', param_model=SwitchTabAction)
@@ -196,7 +235,12 @@ class Controller(Generic[Context]):
 			await page.wait_for_load_state()
 			msg = f'🔄  Switched to tab {params.page_id}'
 			logger.info(msg)
-			return ActionResult(extracted_content=msg, include_in_memory=True)
+			return ActionResult(
+				extracted_content=msg,
+				include_in_memory=True,
+				action_name='switch_tab',
+				action_params=params.model_dump(),
+			)
 
 		@self.registry.action('Open url in new tab', param_model=OpenTabAction)
 		async def open_tab(params: OpenTabAction, browser: BrowserContext):   
@@ -212,7 +256,12 @@ class Controller(Generic[Context]):
 			await browser.create_new_tab(params.url)
 			msg = f'🔗  Opened new tab with {params.url}'
 			logger.info(msg)
-			return ActionResult(extracted_content=msg, include_in_memory=True)
+			return ActionResult(
+				extracted_content=msg,
+				include_in_memory=True,
+				action_name='open_tab',
+				action_params=params.model_dump(),
+			)
 
 		# Content Actions
 		@self.registry.action(
@@ -241,12 +290,21 @@ class Controller(Generic[Context]):
 				output = page_extraction_llm.invoke(template.format(goal=goal, page=content))
 				msg = f'📄  Extracted from page\n: {output.content}\n'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					action_name='extract_content',
+					action_params={'goal': goal},
+				)
 			except Exception as e:
 				logger.debug(f'Error extracting content: {e}')
 				msg = f'📄  Extracted from page\n: {content}\n'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg)
+				return ActionResult(
+					extracted_content=msg,
+					action_name='extract_content',
+					action_params={'goal': goal},
+				)
 
 		@self.registry.action(
 			'Scroll down the page by pixel amount - if no amount is specified, scroll down one page',
@@ -276,6 +334,8 @@ class Controller(Generic[Context]):
 			return ActionResult(
 				extracted_content=msg,
 				include_in_memory=True,
+				action_name='scroll_down',
+				action_params=params.model_dump(),
 			)
 
 		# scroll up
@@ -307,6 +367,8 @@ class Controller(Generic[Context]):
 			return ActionResult(
 				extracted_content=msg,
 				include_in_memory=True,
+				action_name='scroll_up',
+				action_params=params.model_dump(),
 			)
 
 		# send keys
@@ -342,7 +404,12 @@ class Controller(Generic[Context]):
 					raise e
 			msg = f'⌨️  Sent keys: {params.keys}'
 			logger.info(msg)
-			return ActionResult(extracted_content=msg, include_in_memory=True)
+			return ActionResult(
+				extracted_content=msg,
+				include_in_memory=True,
+				action_name='send_keys',
+				action_params=params.model_dump(),
+			)
 
 		@self.registry.action(
 			description='If you dont find something which you want to interact with, scroll to it',
@@ -365,14 +432,24 @@ class Controller(Generic[Context]):
 							await asyncio.sleep(0.5)  # Wait for scroll to complete
 							msg = f'🔍  Scrolled to text: {text}'
 							logger.info(msg)
-							return ActionResult(extracted_content=msg, include_in_memory=True)
+							return ActionResult(
+								extracted_content=msg,
+								include_in_memory=True,
+								action_name='scroll_to_text',
+								action_params={'text': text},
+							)
 					except Exception as e:
 						logger.debug(f'Locator attempt failed: {str(e)}')
 						continue
 
 				msg = f"Text '{text}' not found or not visible on page"
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					action_name='scroll_to_text',
+					action_params={'text': text},
+				)
 
 			except Exception as e:
 				msg = f"Failed to scroll to text '{text}': {str(e)}"
@@ -437,17 +514,32 @@ class Controller(Generic[Context]):
 					msg = '\n'.join(all_options)
 					msg += '\nUse the exact text string in select_dropdown_option'
 					logger.info(msg)
-					return ActionResult(extracted_content=msg, include_in_memory=True)
+					return ActionResult(
+						extracted_content=msg,
+						include_in_memory=True,
+						action_name='get_dropdown_options',
+						action_params={'xpath': dom_element.xpath},
+					)
 				else:
 					msg = 'No options found in any frame for dropdown'
 					logger.info(msg)
-					return ActionResult(extracted_content=msg, include_in_memory=True)
+					return ActionResult(
+						extracted_content=msg,
+						include_in_memory=True,
+						action_name='get_dropdown_options',
+						action_params={'xpath': dom_element.xpath},
+					)
 
 			except Exception as e:
 				logger.info(f'Failed to get dropdown options: {str(e)}')
 				msg = f'Error getting options: {str(e)}'
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					action_name='get_dropdown_options',
+					action_params={'xpath': dom_element.xpath},
+				)
 
 		@self.registry.action(
 			description='Select dropdown option for interactive element index by the text of the option you want to select',
@@ -466,7 +558,12 @@ class Controller(Generic[Context]):
 			if dom_element.tag_name != 'select':
 				logger.info(f'Element is not a select! Tag: {dom_element.tag_name}, Attributes: {dom_element.attributes}')
 				msg = f'Cannot select option: Element with index {index} is a {dom_element.tag_name}, not a select'
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+        			extracted_content=msg,
+           			include_in_memory=True,
+					action_name='select_dropdown_option',
+					action_params={'index': index, 'text': text, 'xpath': dom_element.xpath},
+				)
 
 			logger.debug(f"Attempting to select '{text}' using xpath: {dom_element.xpath}")
 			logger.debug(f'Element attributes: {dom_element.attributes}')
@@ -527,7 +624,12 @@ class Controller(Generic[Context]):
 							msg = f'selected option {text} with value {selected_option_values}'
 							logger.info(msg + f' in frame {frame_index}')
 
-							return ActionResult(extracted_content=msg, include_in_memory=True)
+							return ActionResult(
+           						extracted_content=msg,
+                 				include_in_memory=True,
+								action_name='select_dropdown_option',
+								action_params={'index': index, 'text': text, 'xpath': dom_element.xpath},
+							)
 
 					except Exception as frame_e:
 						logger.info(f'Frame {frame_index} attempt failed: {str(frame_e)}')
@@ -538,12 +640,22 @@ class Controller(Generic[Context]):
 
 				msg = f"Could not select option '{text}' in any frame"
 				logger.info(msg)
-				return ActionResult(extracted_content=msg, include_in_memory=True)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					action_name='select_dropdown_option',
+					action_params={'index': index, 'text': text, 'xpath': dom_element.xpath},
+				)
 
 			except Exception as e:
 				msg = f'Selection failed: {str(e)}'
 				logger.info(msg)
-				return ActionResult(error=msg, include_in_memory=True)
+				return ActionResult(
+					error=msg,
+					include_in_memory=True,
+					action_name='select_dropdown_option',
+					action_params={'index': index, 'text': text, 'xpath': dom_element.xpath},
+				)
 
 	# Register ---------------------------------------------------------------
 

@@ -92,12 +92,13 @@ class CopyCatStep(BaseModel):
 class ActionResult(BaseModel):
 	"""Result of executing an action"""
 
+	action_name: Optional[str] = None
+	action_params: Optional[dict] = None
 	is_done: Optional[bool] = False
 	success: Optional[bool] = None
 	extracted_content: Optional[str] = None
 	error: Optional[str] = None
 	include_in_memory: bool = False  # whether to include in past messages as context or not
-	element_xpath: Optional[str] = None
 
 
 class StepMetadata(BaseModel):
