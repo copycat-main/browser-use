@@ -63,7 +63,7 @@ class MessageManager:
 
 
 		task_message = HumanMessage(
-			content=f'Your ultimate task is: """{self.copycat_step.description}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.'
+			content=f'Your ultimate task is: """{self.copycat_step.description}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual. Do not do anything after the task is finished. Do not hallucinate & do other tasks. Do not do anything else than the task.'
 		)
 		self._add_message_with_tokens(task_message)
   
