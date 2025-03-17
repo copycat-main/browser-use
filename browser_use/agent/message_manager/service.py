@@ -66,6 +66,8 @@ class MessageManager:
 			content=f'Your ultimate task is: """{self.copycat_step.description}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.'
 		)
 		self._add_message_with_tokens(task_message)
+  
+		logger.info(f'Task message: {task_message}')
 
 		if self.settings.sensitive_data:
 			info = f'Here are placeholders for sensitve data: {list(self.settings.sensitive_data.keys())}'
