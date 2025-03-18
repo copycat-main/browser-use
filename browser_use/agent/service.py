@@ -557,10 +557,10 @@ class Agent(Generic[Context]):
 
 				if self.state.history.is_done():
 					if step == 0:
-						logger.info('❌ Not allowed to use done action as the first action')
+						logger.info('❌ Not allowed to use done action as the first action. Trying again with a different action.')
 						self._message_manager._remove_last_state_message()
 						self._message_manager._add_message_with_tokens(
-							HumanMessage(content='You are not allowed to use the done action as the first action. Please try again & use another action.')
+							HumanMessage(content='You are not allowed to use the done action as the first action. Please try again & use a different action.')
 						)
 						continue
         
