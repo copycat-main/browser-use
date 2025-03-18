@@ -420,6 +420,17 @@ class Controller(Generic[Context]):
 		)
 		async def scroll_to_text(text: str, browser: BrowserContext):  # type: ignore
 			page = await browser.get_current_page()
+			current_url = page.url
+   
+			if 'docs.google.com/spreadsheets' in current_url:
+				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
+				logger.info(msg)
+				return ActionResult(
+					extracted_content=msg,
+					include_in_memory=True,
+					error=msg,
+				)
+   
 			try:
 				# Try different locator strategies
 				locators = [
