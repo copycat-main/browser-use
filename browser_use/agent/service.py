@@ -556,6 +556,14 @@ class Agent(Generic[Context]):
 				await self.step(step_info)
 
 				if self.state.history.is_done():
+					if step == 0:
+						logger.info('❌ Not allowed to use done action as the first action')
+						self._message_manager._remove_last_state_message()
+						self._message_manager._add_message_with_tokens(
+							HumanMessage(content='You are not allowed to use the done action as the first action. Please try again & use another action.')
+						)
+						continue
+        
 					if self.settings.validate_output and step < max_steps - 1:
 						if not await self._validate_output():
 							continue
