@@ -335,7 +335,9 @@ class Controller(Generic[Context]):
 				extracted_content=msg,
 				include_in_memory=True,
 				action_name='scroll_down',
-				action_params=params.model_dump(),
+				action_params={
+					'amount': params.amount if params.amount is not None else 'one page',
+				},
 			)
 
 		# scroll up
@@ -368,7 +370,9 @@ class Controller(Generic[Context]):
 				extracted_content=msg,
 				include_in_memory=True,
 				action_name='scroll_up',
-				action_params=params.model_dump(),
+				action_params={
+					'amount': params.amount if params.amount is not None else 'one page',
+				},
 			)
 
 		# send keys
@@ -561,8 +565,6 @@ class Controller(Generic[Context]):
 				return ActionResult(
         			extracted_content=msg,
            			include_in_memory=True,
-					action_name='select_dropdown_option',
-					action_params={'index': index, 'text': text, 'xpath': dom_element.xpath},
 				)
 
 			logger.debug(f"Attempting to select '{text}' using xpath: {dom_element.xpath}")
@@ -628,7 +630,7 @@ class Controller(Generic[Context]):
            						extracted_content=msg,
                  				include_in_memory=True,
 								action_name='select_dropdown_option',
-								action_params={'index': index, 'text': text, 'xpath': dom_element.xpath},
+								action_params={'text': text, 'xpath': dom_element.xpath},
 							)
 
 					except Exception as frame_e:
@@ -643,8 +645,6 @@ class Controller(Generic[Context]):
 				return ActionResult(
 					extracted_content=msg,
 					include_in_memory=True,
-					action_name='select_dropdown_option',
-					action_params={'index': index, 'text': text, 'xpath': dom_element.xpath},
 				)
 
 			except Exception as e:
@@ -653,8 +653,6 @@ class Controller(Generic[Context]):
 				return ActionResult(
 					error=msg,
 					include_in_memory=True,
-					action_name='select_dropdown_option',
-					action_params={'index': index, 'text': text, 'xpath': dom_element.xpath},
 				)
 
 	# Register ---------------------------------------------------------------
