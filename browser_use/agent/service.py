@@ -526,7 +526,7 @@ class Agent(Generic[Context]):
 
 	# @observe(name='agent.run', ignore_output=True)
 	@time_execution_async('--run (agent)')
-	async def run(self, max_steps: int = 100) -> AgentHistoryList:
+	async def run(self, max_steps: int = 100, is_stopped: bool = False) -> AgentHistoryList:
 		"""Execute the task with maximum number of steps"""
 		try:
 			self._log_agent_run()
@@ -543,7 +543,7 @@ class Agent(Generic[Context]):
 					break
 
 				# Check control flags before each step
-				if self.state.stopped:
+				if self.state.stopped or is_stopped:
 					logger.info('Agent stopped')
 					break
 
