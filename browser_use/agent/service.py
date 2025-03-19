@@ -544,7 +544,7 @@ class Agent(Generic[Context]):
 
 				# Check control flags before each step
 				if self.state.stopped or is_stopped:
-					logger.info('Agent stopped')
+					logger.info('Agent stopped shdshdsdh')
 					break
 
 				while self.state.paused:
