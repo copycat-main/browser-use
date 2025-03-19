@@ -92,6 +92,8 @@ class CopyCatStep(BaseModel):
 class ActionResult(BaseModel):
 	"""Result of executing an action"""
 
+	action_name: Optional[str] = None
+	action_params: Optional[dict] = None
 	is_done: Optional[bool] = False
 	success: Optional[bool] = None
 	extracted_content: Optional[str] = None

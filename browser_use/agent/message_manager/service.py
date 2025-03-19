@@ -11,7 +11,6 @@ from langchain_core.messages import (
 	ToolMessage,
 )
 from pydantic import BaseModel
-
 from browser_use.agent.message_manager.views import MessageMetadata
 from browser_use.agent.prompts import AgentMessagePrompt
 from browser_use.agent.views import (
@@ -40,12 +39,12 @@ class MessageManagerSettings(BaseModel):
 class MessageManager:
 	def __init__(
 		self,
-		copycat_steps: List[CopyCatStep],
+		copycat_step: CopyCatStep,
 		system_message: SystemMessage,
 		settings: MessageManagerSettings = MessageManagerSettings(),
 		state: MessageManagerState = MessageManagerState(),
 	):
-		self.copycat_steps = copycat_steps
+		self.copycat_step = copycat_step
 		self.settings = settings
 		self.state = state
 		self.system_prompt = system_message
@@ -62,15 +61,13 @@ class MessageManager:
 			context_message = HumanMessage(content='Context for the task' + self.settings.message_context)
 			self._add_message_with_tokens(context_message)
 
-		steps_message = ""
-  
-		for i, step in enumerate(self.copycat_steps):
-			steps_message += f'Step {i+1}: {step.description}\n'
 
 		task_message = HumanMessage(
-			content=f'Your ultimate task is to perform the following steps in order:\n"""{steps_message}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.'
+			content=f'Your ultimate task is: """{self.copycat_step.description}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual. You are not allowed to use the done action as the first action. Do not do anything after the task is finished. Do not hallucinate & do other tasks. Do not do anything else than the task.'
 		)
 		self._add_message_with_tokens(task_message)
+  
+		logger.info(f'Task message: {task_message}')
 
 		if self.settings.sensitive_data:
 			info = f'Here are placeholders for sensitve data: {list(self.settings.sensitive_data.keys())}'
