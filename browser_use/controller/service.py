@@ -1,14 +1,14 @@
 import asyncio
 import json
 import logging
-from typing import Any, Dict, Generic, Optional, Type, TypeVar
+from typing import Dict, Generic, Optional, Type, TypeVar
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import PromptTemplate
 
 # from lmnr.sdk.laminar import Laminar
 from pydantic import BaseModel
-
+from langchain.output_parsers import JsonOutputToolsParser
 from browser_use.agent.views import ActionModel, ActionResult
 from browser_use.browser.context import BrowserContext
 from browser_use.controller.registry.service import Registry
@@ -286,15 +286,11 @@ class Controller(Generic[Context]):
 
 			prompt = 'Your task is to extract the content of the page. You will be given a page and a goal and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Respond in json format. Extraction goal: {goal}, Page: {page}'
 			template = PromptTemplate(input_variables=['goal', 'page'], template=prompt)
+			parser = JsonOutputToolsParser()
 			try:
-				class ExtractedContent(BaseModel):
-					extracted_content: dict[str, Any]
-    
-				structured_llm = page_extraction_llm.with_structured_output(ExtractedContent)
-    
-				response: dict[str, Any] = await structured_llm.ainvoke(template.format(goal=goal, page=content))  # type: ignore
-    
-				msg = f'📄  Extracted from page\n: {response}\n'
+				chain = template | page_extraction_llm | parser
+				output = chain.invoke({'goal': goal, 'page': content})
+				msg = f'📄  Extracted from page\n: {output}\n'
 				logger.info(msg)
 				return ActionResult(
 					extracted_content=msg,
