@@ -287,8 +287,13 @@ class Controller(Generic[Context]):
 			prompt = 'Your task is to extract the content of the page. You will be given a page and a goal and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Respond in json format. Extraction goal: {goal}, Page: {page}'
 			template = PromptTemplate(input_variables=['goal', 'page'], template=prompt)
 			try:
-				output = page_extraction_llm.invoke(template.format(goal=goal, page=content))
-				msg = f'📄  Extracted from page\n: {output.content}\n'
+				schema = {"extracted_content": "The extracted content from the page"}
+				structured_llm = page_extraction_llm.with_structured_output(schema)
+    
+				response: dict[str, Any] = await structured_llm.ainvoke(template.format(goal=goal, page=content))  # type: ignore
+				extracted_content = response['extracted_content']
+    
+				msg = f'📄  Extracted from page\n: {extracted_content}\n'
 				logger.info(msg)
 				return ActionResult(
 					extracted_content=msg,
