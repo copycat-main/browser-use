@@ -292,8 +292,6 @@ class Controller(Generic[Context]):
 			)
 			chain = prompt | page_extraction_llm | parser
    
-			logger.info(f'Format instructions: {parser.get_format_instructions()}')
-   
 			try:
 				output = chain.invoke({'goal': goal, 'page': content})
 	
@@ -308,8 +306,6 @@ class Controller(Generic[Context]):
 			except Exception as e:
 				logger.debug(f'Error extracting content: {e}')
 				msg = f'📄  Extracted from page\n: {content}\n'
-				logger.info("Error extracting content:")
-				logger.info(e)
 				logger.info(msg)
 				return ActionResult(
 					extracted_content=msg,
