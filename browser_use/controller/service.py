@@ -8,7 +8,7 @@ from langchain_core.prompts import PromptTemplate
 
 # from lmnr.sdk.laminar import Laminar
 from pydantic import BaseModel
-from langchain.output_parsers import JsonOutputToolsParser
+from langchain_core.output_parsers import JsonOutputParser
 from browser_use.agent.views import ActionModel, ActionResult
 from browser_use.browser.context import BrowserContext
 from browser_use.controller.registry.service import Registry
@@ -283,14 +283,19 @@ class Controller(Generic[Context]):
 			import markdownify
 
 			content = markdownify.markdownify(await page.content())
-
-			prompt = 'Your task is to extract the content of the page. You will be given a page and a goal and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Respond in json format. Extraction goal: {goal}, Page: {page}'
-			template = PromptTemplate(input_variables=['goal', 'page'], template=prompt)
-			parser = JsonOutputToolsParser()
+   
+			parser = JsonOutputParser()
+			prompt = PromptTemplate(
+				template='Your task is to extract the content of the page. You will be given a page and a goal and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Extraction goal: {goal}, Page: {page}',
+				input_variables=["query"],
+				partial_variables={"format_instructions": parser.get_format_instructions()},
+			)
+			chain = prompt | page_extraction_llm | parser
+   
 			try:
-				chain = template | page_extraction_llm | parser
 				output = chain.invoke({'goal': goal, 'page': content})
-				msg = f'📄  Extracted from page\n: {output}\n'
+	
+				msg = f'📄  Extracted from page:\n {output}\n'
 				logger.info(msg)
 				return ActionResult(
 					extracted_content=msg,
