@@ -286,11 +286,13 @@ class Controller(Generic[Context]):
    
 			parser = JsonOutputParser()
 			prompt = PromptTemplate(
-				template='Your task is to extract the content of the page. You will be given a page and a goal and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Extraction goal: {goal}, Page: {page}',
+				template='Your task is to extract the content of the page. You will be given a page and a goal and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Extraction goal: {goal}, Page: {page}\n\n{format_instructions}',
 				input_variables=["query"],
 				partial_variables={"format_instructions": parser.get_format_instructions()},
 			)
 			chain = prompt | page_extraction_llm | parser
+   
+			logger.info(f'Format instructions: {parser.get_format_instructions()}')
    
 			try:
 				output = chain.invoke({'goal': goal, 'page': content})
