@@ -37,9 +37,10 @@ class Controller(Generic[Context]):
 	def __init__(
 		self,
 		exclude_actions: list[str] = [],
+		only_include_actions: list[str] = [],
 		output_model: Optional[Type[BaseModel]] = None,
 	):
-		self.registry = Registry[Context](exclude_actions)
+		self.registry = Registry[Context](exclude_actions, only_include_actions)
 
 		"""Register all default browser actions"""
 

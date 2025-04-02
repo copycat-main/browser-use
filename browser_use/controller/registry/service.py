@@ -19,9 +19,10 @@ Context = TypeVar('Context')
 class Registry(Generic[Context]):
 	"""Service for registering and managing actions"""
 
-	def __init__(self, exclude_actions: list[str] = []):
+	def __init__(self, exclude_actions: list[str] = [], only_include_actions: list[str] = []):
 		self.registry = ActionRegistry()
 		self.exclude_actions = exclude_actions
+		self.only_include_actions = only_include_actions
 
 	@time_execution_sync('--create_param_model')
 	def _create_param_model(self, function: Callable) -> Type[BaseModel]:
@@ -49,6 +50,10 @@ class Registry(Generic[Context]):
 		def decorator(func: Callable):
 			# Skip registration if action is in exclude_actions
 			if func.__name__ in self.exclude_actions:
+				return func
+
+			# Skip registration if action is not in only_include_actions if it is set
+			if len(self.only_include_actions) > 0 and func.__name__ not in self.only_include_actions:
 				return func
 
 			# Create param model from function if not provided
