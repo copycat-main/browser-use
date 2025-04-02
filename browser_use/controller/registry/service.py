@@ -49,12 +49,13 @@ class Registry(Generic[Context]):
 
 		def decorator(func: Callable):
 			# Skip registration if action is in exclude_actions
-			if func.__name__ in self.exclude_actions:
-				return func
+			if func.__name__ != "done":
+				if func.__name__ in self.exclude_actions:
+					return func
 
-			# Skip registration if action is not in only_include_actions if it is set
-			if len(self.only_include_actions) > 0 and func.__name__ not in self.only_include_actions:
-				return func
+				# Skip registration if action is not in only_include_actions if it is set
+				if len(self.only_include_actions) > 0 and func.__name__ not in self.only_include_actions:
+					return func
 
 			# Create param model from function if not provided
 			actual_param_model = param_model or self._create_param_model(func)
