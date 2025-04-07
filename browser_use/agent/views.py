@@ -94,6 +94,7 @@ class ActionResult(BaseModel):
 
 	action_name: Optional[str] = None
 	action_params: Optional[dict] = None
+	action_result: Optional[Any] = None
 	is_done: Optional[bool] = False
 	success: Optional[bool] = None
 	extracted_content: Optional[str] = None

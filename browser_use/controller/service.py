@@ -62,6 +62,7 @@ class Controller(Generic[Context]):
 					extracted_content=json.dumps(output_dict),
 					action_name='done',
 					action_params=output_dict,
+					action_result=output_dict,
 				)
 		else:
 			@self.registry.action(
@@ -75,6 +76,7 @@ class Controller(Generic[Context]):
 					extracted_content=params.text,
 					action_name='done',
 					action_params=params.model_dump(),
+					action_result=params.model_dump(),
 				)
 
 		# Basic Navigation Actions
@@ -303,6 +305,7 @@ class Controller(Generic[Context]):
 					include_in_memory=True,
 					action_name='extract_content',
 					action_params={'goal': goal},
+					action_result=output,
 				)
 			except Exception as e:
 				logger.debug(f'Error extracting content: {e}')
@@ -312,6 +315,7 @@ class Controller(Generic[Context]):
 					extracted_content=msg,
 					action_name='extract_content',
 					action_params={'goal': goal},
+					action_result=content,
 				)
 
 		@self.registry.action(
@@ -542,6 +546,7 @@ class Controller(Generic[Context]):
 						include_in_memory=True,
 						action_name='get_dropdown_options',
 						action_params={'xpath': dom_element.xpath},
+						action_result=all_options,
 					)
 				else:
 					msg = 'No options found in any frame for dropdown'
@@ -551,6 +556,7 @@ class Controller(Generic[Context]):
 						include_in_memory=True,
 						action_name='get_dropdown_options',
 						action_params={'xpath': dom_element.xpath},
+						action_result=all_options,
 					)
 
 			except Exception as e:
@@ -560,8 +566,6 @@ class Controller(Generic[Context]):
 				return ActionResult(
 					extracted_content=msg,
 					include_in_memory=True,
-					action_name='get_dropdown_options',
-					action_params={'xpath': dom_element.xpath},
 				)
 
 		@self.registry.action(
