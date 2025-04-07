@@ -59,10 +59,7 @@ class Controller(Generic[Context]):
 				return ActionResult(
 					is_done=True,
 					success=params.success,
-					extracted_content=json.dumps(output_dict),
-					action_name='done',
-					action_params=output_dict,
-					action_result=output_dict,
+					extracted_content=json.dumps(output_dict)
 				)
 		else:
 			@self.registry.action(
@@ -73,10 +70,7 @@ class Controller(Generic[Context]):
 				return ActionResult(
 					is_done=True,
 					success=params.success,
-					extracted_content=params.text,
-					action_name='done',
-					action_params=params.model_dump(),
-					action_result=params.model_dump(),
+					extracted_content=params.text
 				)
 
 		# Basic Navigation Actions
