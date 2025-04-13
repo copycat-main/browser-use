@@ -116,65 +116,6 @@ class Controller(Generic[Context]):
 
 
 		# Element Interaction Actions
-		@self.registry.action(
-			'Click element',
-			param_model=ClickElementAction,
-		)
-		async def click_element(params: ClickElementAction, browser: BrowserContext):
-			page = await browser.get_current_page()
-			current_url = page.url
-   
-			if 'docs.google.com/spreadsheets' in current_url:
-				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
-				logger.info(msg)
-				return ActionResult(
-					extracted_content=msg,
-					include_in_memory=True,
-					error=msg,
-				)
-      
-			session = await browser.get_session()
-
-			if params.index not in await browser.get_selector_map():
-				raise Exception(f'Element with index {params.index} does not exist - retry or use alternative actions')
-
-			element_node = await browser.get_dom_element_by_index(params.index)
-    
-			initial_pages = len(session.context.pages)
-
-			# if element has file uploader then dont click
-			if await browser.is_file_uploader(element_node):
-				msg = f'Index {params.index} - has an element which opens file upload dialog. To upload files please use a specific function to upload files '
-				logger.info(msg)
-				return ActionResult(
-					extracted_content=msg,
-					include_in_memory=True,
-				)
-
-			msg = None
-
-			try:
-				download_path = await browser._click_element_node(element_node)
-				if download_path:
-					msg = f'💾  Downloaded file to {download_path}'
-				else:
-					msg = f'🖱️  Clicked button with index {params.index}: {element_node.get_all_text_till_next_clickable_element(max_depth=2)}'
-
-				logger.info(msg)
-				if len(session.context.pages) > initial_pages:
-					new_tab_msg = 'New tab opened - switching to it'
-					msg += f' - {new_tab_msg}'
-					logger.info(new_tab_msg)
-					await browser.switch_to_tab(-1)
-				return ActionResult(
-					extracted_content=msg,
-					include_in_memory=True,
-					action_name='click_element',
-					action_params={**params.model_dump(), 'xpath': element_node.xpath},
-				)
-			except Exception as e:
-				logger.warning(f'Element not clickable with index {params.index} - most likely the page changed')
-				return ActionResult(error=str(e))
 
 		@self.registry.action(
 			'Input text into a input interactive element',
