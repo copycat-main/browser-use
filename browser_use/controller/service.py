@@ -114,18 +114,6 @@ class Controller(Generic[Context]):
 				action_params=params.model_dump(),
 			)
 
-		@self.registry.action('Go back to the previous page.', param_model=NoParamsAction)
-		async def go_back(_: NoParamsAction, browser: BrowserContext):
-			await browser.go_back()
-			msg = '🔙  Navigated back'
-			logger.info(msg)
-			return ActionResult(
-				extracted_content=msg,
-				include_in_memory=True,
-				action_name='go_back',
-				action_params={},
-			)
-
 
 		# Element Interaction Actions
 		@self.registry.action(
