@@ -1093,7 +1093,7 @@ class BrowserContext:
 					await element_handle.click()
 					await page.keyboard.type(text, delay=5)
 				else:
-					await element_handle.type(text)
+					await element_handle.type(text, delay=5)
 			except Exception:
 				logger.debug('Could not type text into element. Trying to click and type.')
 				await element_handle.click()
