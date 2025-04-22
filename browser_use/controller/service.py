@@ -248,58 +248,6 @@ class Controller(Generic[Context]):
 				action_params=params.model_dump(),
 			)
 
-		# Content Actions
-		@self.registry.action(
-			'Extract page content to retrieve specific information from the page, e.g. all company names, a specifc description, all information about, links with companies in structured format or simply links',
-		)
-		async def extract_content(goal: str, browser: BrowserContext, page_extraction_llm: BaseChatModel):
-			page = await browser.get_current_page()
-			current_url = page.url
-   
-			if 'docs.google.com/spreadsheets' in current_url:
-				msg = f'🔗  Skipping Google Sheet URL Navigation: {current_url}. Use Google Sheets related actions instead.'
-				logger.info(msg)
-				return ActionResult(
-					extracted_content=msg,
-					include_in_memory=True,
-					error=msg,
-				)
-   
-			import markdownify
-
-			content = markdownify.markdownify(await page.content())
-   
-			parser = JsonOutputParser()
-			prompt = PromptTemplate(
-				template='Your task is to extract the content of the page. You will be given a page and a goal and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Extraction goal: {goal}, Page: {page}\n\n{format_instructions}',
-				input_variables=["goal", "page"],
-				partial_variables={"format_instructions": f"{parser.get_format_instructions()}. Do not return an array. It must be a JSON object."},
-			)
-			chain = prompt | page_extraction_llm | parser
-   
-			try:
-				output = chain.invoke({'goal': goal, 'page': content})
-	
-				msg = f'📄  Extracted from page:\n {output}\n'
-				logger.info(msg)
-				return ActionResult(
-					extracted_content=msg,
-					include_in_memory=True,
-					action_name='extract_content',
-					action_params={'goal': goal},
-					action_result=output,
-				)
-			except Exception as e:
-				logger.debug(f'Error extracting content: {e}')
-				msg = f'📄  Extracted from page\n: {content}\n'
-				logger.info(msg)
-				return ActionResult(
-					extracted_content=msg,
-					action_name='extract_content',
-					action_params={'goal': goal},
-					action_result=content,
-				)
-
 		@self.registry.action(
 			'Scroll down the page by pixel amount - if no amount is specified, scroll down one page',
 			param_model=ScrollAction,
