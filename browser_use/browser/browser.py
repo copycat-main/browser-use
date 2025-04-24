@@ -7,9 +7,9 @@ import gc
 import logging
 from dataclasses import dataclass, field
 
-from playwright._impl._api_structures import ProxySettings
-from playwright.async_api import Browser as PlaywrightBrowser
-from playwright.async_api import (
+from rebrowser_playwright._impl._api_structures import ProxySettings
+from rebrowser_playwright.async_api import Browser as PlaywrightBrowser
+from rebrowser_playwright.async_api import (
 	Playwright,
 	async_playwright,
 )
