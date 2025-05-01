@@ -52,8 +52,6 @@ class BrowserConfig:
 	chrome_instance_path: str | None = None
 	wss_url: str | None = None
 	cdp_url: str | None = None
-	playwright: Playwright | None = None
-	playwright_browser: PlaywrightBrowser | None = None
 
 	proxy: ProxySettings | None = field(default=None)
 	new_context_config: BrowserContextConfig = field(default_factory=BrowserContextConfig)
@@ -102,8 +100,11 @@ class Browser:
 	@time_execution_async('--init (browser)')
 	async def _init(self):
 		"""Initialize the browser session"""
-		self.playwright = self.config.playwright
-		self.playwright_browser = self.config.playwright_browser
+		playwright = await async_playwright().start()
+		browser = await self._setup_browser(playwright)
+
+		self.playwright = playwright
+		self.playwright_browser = browser
 
 		return self.playwright_browser
 
