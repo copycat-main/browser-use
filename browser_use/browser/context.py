@@ -1061,7 +1061,7 @@ class BrowserContext:
 			return None
 
 	@time_execution_async('--input_text_element_node')
-	async def _input_text_element_node(self, element_node: DOMElementNode, text: str):
+	async def _input_text_element_node(self, element_node: DOMElementNode, text: str, should_replace_existing_text: bool = True):
 		"""
 		Input text into an element with proper error handling and state management.
 		Handles different types of input fields and ensures proper element state before input.
@@ -1091,12 +1091,24 @@ class BrowserContext:
 			try:
 				if await is_contenteditable.json_value():
 					await element_handle.click()
+
+					if should_replace_existing_text:
+						await page.keyboard.press("Control+A")
+						await page.keyboard.press("Backspace")
+
 					await page.keyboard.type(text, delay=5)
 				else:
+					if should_replace_existing_text:
+						await element_handle.fill("")
+
 					await element_handle.type(text, delay=5)
 			except Exception:
-				logger.debug('Could not type text into element. Trying to click and type.')
 				await element_handle.click()
+				
+				if should_replace_existing_text:
+					await page.keyboard.press("Control+A")
+					await page.keyboard.press("Backspace")
+				
 				await page.keyboard.type(text, delay=5)
 
 		except Exception as e:

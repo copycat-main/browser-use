@@ -20,6 +20,7 @@ class ClickElementAction(BaseModel):
 class InputTextAction(BaseModel):
 	index: int
 	text: str
+	should_replace_existing_text: bool = True
 	xpath: Optional[str] = None
 
 
